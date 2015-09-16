@@ -147,15 +147,6 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     memcpy (shortFFTData, channelData, int(ShortFFT::Size) * sizeof(float));
     shortFFT.performFrequencyOnlyForwardTransform (shortFFTData);
     
-    // find the range of values produced, so we can scale our rendering to
-    // show up the detail clearly
-    Range<float> maxLevel = FloatVectorOperations::findMinAndMax (shortFFTData, int(ShortFFT::Size) / 2);
-    
-    // Now get bin hops
-    int binHopsHz = getSampleRate() / int(ShortFFT::Size);
-    
-    // Just get value from equally spaced bins.
-    int step = int(ShortFFT::Size) / 8;
     
     // Get bins at 1,2,4,8, ...
     for (int i = 0, j = 1; i < 8; i++, j*=2)
