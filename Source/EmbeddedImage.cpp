@@ -194,7 +194,7 @@ void EmbeddedImage::paint (Graphics& g)
     //[UserPaint] Add your own custom painting code here..
     Path wavePath;
     
-    const float binStep = 16.0f;
+    const float binStep = 18.0f;
     const float amplitudeStep = 4.0f;
     int xOffset = 12;
     int yOffset = 190;
@@ -210,7 +210,7 @@ void EmbeddedImage::paint (Graphics& g)
         // Iterate over level for each bin.
         for (int y = yOffset; y > yOffset - barCount * amplitudeStep; y -= amplitudeStep) {
             
-            wavePath.addLineSegment (Line<float> (x, y, x + 14.f, y), 2.0f);
+            wavePath.addLineSegment (Line<float> (x, y, x + 16.f, y), 2.0f);
             
         }
 

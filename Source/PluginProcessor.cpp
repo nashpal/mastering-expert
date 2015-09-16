@@ -107,12 +107,17 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    if (getNumInputChannels() < 2)
+    {
+        // Only want stereo...
+    }
 }
 
 void TestPluginAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    int x = 4;
 }
 
 void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
@@ -124,6 +129,8 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // when they first compile the plugin, but obviously you don't need to
     // this code if your algorithm already fills all the output channels.
     
+    dynamicRangeCounter++;
+    
     const int numSamples = buffer.getNumSamples();
     
     for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
@@ -131,15 +138,6 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
 
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
-    for (int channel = 0; channel < getNumInputChannels(); ++channel)
-    {
-        float* channelData = buffer.getWritePointer (channel);
-
-        for (int i = 0; i < numSamples; ++i)
-        {
-            channelData[i] *= gain->getValue();
-        }
-    }
     
     // Get left channel FFT for logo.
     const float* channelData = buffer.getReadPointer (0);
@@ -151,8 +149,82 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // Get bins at 1,2,4,8, ...
     for (int i = 0, j = 1; i < 8; i++, j*=2)
     {
-//        logoFFTBins[i] = jmap (shortFFTData[j], 0.0f, maxLevel.getEnd(), 0.0f, 1.0f);
         logoFFTBins[i] = int(shortFFTData[j]);
+    }
+    
+    
+    // Hold the sum of all summed L/R samples for average.
+    float blockFrameSum = 0;
+    
+    // Hold the block's max sample value from left or right.
+    float blockMax = 0;
+    
+    if (getNumInputChannels() == 2 && getNumOutputChannels() == 2)
+    {
+        for (int i = 0; i < numSamples; ++i)
+        {
+            float* leftChannelData = buffer.getWritePointer (0);
+            float* rightChannelData = buffer.getWritePointer (1);
+            
+            // Headroom!
+            if (!headroomBreached)
+            {
+                headroomBreached = std::abs(leftChannelData[i]) > 0.5 || std::abs(rightChannelData[i]) > 0.5 ? true : false;
+            }
+            
+            if (blockMax < std::abs(leftChannelData[i]))
+            {
+                blockMax = std::abs(leftChannelData[i]);
+            }
+            if (blockMax < std::abs(rightChannelData[i]))
+            {
+                blockMax = std::abs(rightChannelData[i]);
+            }
+           
+            float frameSum = leftChannelData[i] + rightChannelData[i];
+            blockFrameSum += (std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]));
+            
+            // Mono!
+            if (mono)
+            {
+                float frameSumAverage = frameSum / 2.f;
+            
+                leftChannelData[i] = frameSumAverage;
+                rightChannelData[i] = frameSumAverage;
+            }
+            
+            // Dynamic range
+//            channelData[i] *= gain->getValue();
+        }
+    }
+    
+    // Calculate average value for this block
+    float blockAverage = (blockFrameSum / 2) / static_cast<float>(numSamples);
+    
+    if (dynamicRangeCounter < 100)
+    {
+        // Use this value to get dB, i.e. 20log(blockMax/blockAverage).
+        dynamicRange[dynamicRangeCounter] = 20 * logf(blockMax / blockAverage);
+    } else
+    {
+        // Notify the editor to check the average value of dynamicRange.
+        sendChangeMessage();
+        dynamicRangeCounter = 0;
+    }
+    
+    
+    // ask the host for the current time.
+    AudioPlayHead::CurrentPositionInfo newTime;
+    
+    if (getPlayHead() != nullptr && getPlayHead()->getCurrentPosition (newTime))
+    {
+        // Successfully got the current time from the host..
+        lastPosInfo = newTime;
+    }
+    else
+    {
+        // If the host fails to fill-in the current time, we'll just clear it to a default..
+        lastPosInfo.resetToDefault();
     }
     
 }

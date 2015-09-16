@@ -65,7 +65,8 @@ private:
 //==============================================================================
 /**
 */
-class TestPluginAudioProcessor  : public AudioProcessor
+class TestPluginAudioProcessor : public AudioProcessor,
+                                 public ChangeBroadcaster
 {
 public:
     //==============================================================================
@@ -122,6 +123,19 @@ public:
     };
 
     std::array<float, 8> logoFFTBins;
+    
+    bool headroomBreached = false;
+    
+    AudioPlayHead::CurrentPositionInfo lastPosInfo;
+    
+    // Determine whether to sum stereo;
+    bool mono = false;
+    
+    // How many dynmaic range measurements have we taken.
+    int dynamicRangeCounter = 0;
+    
+    // Hold the dynmaic range for a lock, max - average.
+    std::array<float, 100>  dynamicRange {};
     
 private:
     

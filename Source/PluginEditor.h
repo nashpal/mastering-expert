@@ -20,6 +20,8 @@
 */
 class TestPluginAudioProcessorEditor  : public AudioProcessorEditor,
                                         public Slider::Listener,
+                                        public Button::Listener,
+                                        public ChangeListener, // For infrequent broadcasts from processor.
                                         public Timer
 {
 public:
@@ -34,14 +36,26 @@ public:
     void sliderDragStarted  (Slider*) override;
     void sliderDragEnded    (Slider*) override;
     
+    void buttonClicked      (Button*) override;
+    
+    void changeListenerCallback (ChangeBroadcaster* source) override;
+    
     void timerCallback() override;
 
 private:
 
-
+    // Reset display.
+    void reset();
+    
     EmbeddedImage logo;
     Slider gainSlider;
     Label gainLabel;
+    
+    Label headroomBreachedLabel;
+    Label dynamicRangeLabel;
+    
+    TextButton resetButton;
+    TextButton monoButton;
     
     TestPluginAudioProcessor& getProcessor() const
     {

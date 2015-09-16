@@ -10,15 +10,33 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-
+#include <numeric>
 
 //==============================================================================
 TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioProcessor& p)
-    : AudioProcessorEditor (p), gainLabel ("", "Throughput level:"),gainSlider ("gain")
+    :   AudioProcessorEditor (p),
+        headroomBreachedLabel("", "Headroom OK"),
+        gainLabel ("", "Throughput level:"),
+        dynamicRangeLabel("", "0dB"),
+        gainSlider ("gain"),
+        resetButton("Reset"),
+        monoButton("Mono")
 {
     
     addAndMakeVisible(&logo);
-
+    
+    addAndMakeVisible(headroomBreachedLabel);
+    headroomBreachedLabel.setFont (Font (15.0f));
+    
+    addAndMakeVisible(resetButton);
+    resetButton.addListener(this);
+    
+    addAndMakeVisible(monoButton);
+    monoButton.addListener(this);
+    
+    addAndMakeVisible(dynamicRangeLabel);
+    dynamicRangeLabel.setFont (Font (15.0f));
+    
 //    addAndMakeVisible (gainSlider);
 //    gainSlider.setSliderStyle (Slider::Rotary);
 //    gainSlider.addListener (this);
@@ -30,7 +48,9 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (540, 200);
+    setSize (540, 300);
+    
+    getProcessor().addChangeListener(this);
     
     startTimer (100);
 }
@@ -42,8 +62,9 @@ TestPluginAudioProcessorEditor::~TestPluginAudioProcessorEditor()
 //==============================================================================
 void TestPluginAudioProcessorEditor::paint (Graphics& g)
 {
-//    g.fillAll (Colours::white);
-//
+    
+    g.fillAll (Colours::white);
+
 //    g.setColour (Colours::black);
 //    g.setFont (15.0f);
 //    g.drawFittedText ("Hello World!", getLocalBounds(), Justification::centred, 1);
@@ -54,7 +75,12 @@ void TestPluginAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     logo.setBounds(0, 0, 540, 200);
+    headroomBreachedLabel.setBounds(5, 225, 200, 40);
+    dynamicRangeLabel.setBounds(5, 270, 200, 40);
+    resetButton.setBounds(5, 210, 50, 20);
+    monoButton.setBounds(60, 210, 50, 20);
 //    gainSlider.setBoundsRelative(0.05, 0.85, 0.1, 0.1);
+    
 }
 
 AudioProcessorParameter* TestPluginAudioProcessorEditor::getParameterFromSlider (const Slider* slider) const
@@ -64,6 +90,24 @@ AudioProcessorParameter* TestPluginAudioProcessorEditor::getParameterFromSlider 
 
     
     return nullptr;
+}
+
+void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
+{
+    
+    if (button == &resetButton)
+    {
+        this->reset();
+        return;
+    }
+    
+    if(button == &monoButton)
+    {
+        monoButton.setToggleState(!monoButton.getToggleState(), dontSendNotification);
+        
+        getProcessor().mono = monoButton.getToggleState();
+    }
+    
 }
 
 // This is our Slider::Listener callback, when the user drags a slider.
@@ -96,11 +140,42 @@ void TestPluginAudioProcessorEditor::sliderDragEnded (Slider* slider)
 
 void TestPluginAudioProcessorEditor::timerCallback()
 {
-    TestPluginAudioProcessor& ourProcessor = getProcessor();
+    TestPluginAudioProcessor& processor = getProcessor();
     
-    logo.setFFTBins(ourProcessor.logoFFTBins);
+    if (processor.lastPosInfo.isPlaying)
+    {
+        logo.setFFTBins(processor.logoFFTBins);
+        
+        gainSlider.setValue (processor.gain->getValue(), dontSendNotification);
+        
+        logo.repaint();
+        
+        if (processor.headroomBreached)
+        {
+            headroomBreachedLabel.setText("Headroom Breached", dontSendNotification);
+        } else
+        {
+            headroomBreachedLabel.setText("Headroom OK", dontSendNotification);
+        }
+    }
+}
+
+void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster *source)
+{
+    // We have been notified to check the dynamicRange array.
+    TestPluginAudioProcessor& processor = static_cast<TestPluginAudioProcessor&>(*source);
     
-    gainSlider.setValue (ourProcessor.gain->getValue(), dontSendNotification);
+    // Get the average of the dynamicRange, note this is still being changed by the audio thread,
+    // but this is only a heuristic method anyway.
+    float averageDynamicRange = std::accumulate(processor.dynamicRange.begin(), processor.dynamicRange.end(), 0.0) / 100.;
     
-    logo.repaint();
+    dynamicRangeLabel.setText(String(averageDynamicRange), dontSendNotification);
+    
+}
+
+void TestPluginAudioProcessorEditor::reset()
+{
+    TestPluginAudioProcessor& processor = getProcessor();
+    
+    processor.headroomBreached = false;
 }
