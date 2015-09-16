@@ -19,18 +19,18 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     addAndMakeVisible(&logo);
 
-    addAndMakeVisible (gainSlider);
-    gainSlider.setSliderStyle (Slider::Rotary);
-    gainSlider.addListener (this);
-    gainSlider.setRange (0.0, 1.0, 0.01);
+//    addAndMakeVisible (gainSlider);
+//    gainSlider.setSliderStyle (Slider::Rotary);
+//    gainSlider.addListener (this);
+//    gainSlider.setRange (0.0, 1.0, 0.01);
     
     // add some labels for the sliders..
-    gainLabel.attachToComponent (&gainSlider, false);
-    gainLabel.setFont (Font (11.0f));
+//    gainLabel.attachToComponent (&gainSlider, false);
+//    gainLabel.setFont (Font (11.0f));
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (logo.getWidth(), logo.getHeight());
+    setSize (540, 200);
     
     startTimer (100);
 }
@@ -53,8 +53,8 @@ void TestPluginAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
-    logo.setBounds(0, 0, getWidth(), getHeight());
-    gainSlider.setBoundsRelative(0.05, 0.35, 0.9, 0.25);
+    logo.setBounds(0, 0, 540, 200);
+//    gainSlider.setBoundsRelative(0.05, 0.85, 0.1, 0.1);
 }
 
 AudioProcessorParameter* TestPluginAudioProcessorEditor::getParameterFromSlider (const Slider* slider) const

@@ -111,7 +111,7 @@ public:
     
     enum class ShortFFT : int
     {
-        Order = 7,
+        Order = 9,
         Size  = 1 << Order
     };
     

@@ -157,9 +157,11 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // Just get value from equally spaced bins.
     int step = int(ShortFFT::Size) / 8;
     
-    for (int i = 0; i < 8; i++) {
-        
-        logoFFTBins[i] = jmap (shortFFTData[i * step], 0.0f, maxLevel.getEnd(), 0.0f, 1.0f);
+    // Get bins at 1,2,4,8, ...
+    for (int i = 0, j = 1; i < 8; i++, j*=2)
+    {
+//        logoFFTBins[i] = jmap (shortFFTData[j], 0.0f, maxLevel.getEnd(), 0.0f, 1.0f);
+        logoFFTBins[i] = int(shortFFTData[j]);
     }
     
 }

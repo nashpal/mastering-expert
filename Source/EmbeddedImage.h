@@ -55,8 +55,11 @@ public:
     static const char* logo_png;
     static const int logo_pngSize;
     
-
-
+    static const char* logo_svg;
+    static const int logo_svgSize;
+    
+    Path logoPath;
+    Path maskPath;
 
 
 private:
