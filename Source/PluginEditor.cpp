@@ -19,6 +19,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
         gainLabel ("", "Throughput level:"),
         dynamicRangeLabel("", "Dynamic Range: 0dB"),
         stereoCorrelationLabel("", "Correlation: 0"),
+        stereoCorrelationConvolutionLabel("", "Convolution Correlation: 0"),
         gainSlider ("gain"),
         resetButton("Reset"),
         monoButton("Mono")
@@ -41,6 +42,10 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addAndMakeVisible(stereoCorrelationLabel);
     stereoCorrelationLabel.setFont(Font(15.0f));
     
+    addAndMakeVisible(stereoCorrelationConvolutionLabel);
+    stereoCorrelationConvolutionLabel.setFont(Font(15.0f));
+    
+    
 //    addAndMakeVisible (gainSlider);
 //    gainSlider.setSliderStyle (Slider::Rotary);
 //    gainSlider.addListener (this);
@@ -52,7 +57,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (540, 400);
+    setSize (540, 410);
     
     getProcessor().addChangeListener(this);
     
@@ -83,6 +88,7 @@ void TestPluginAudioProcessorEditor::resized()
     headroomBreachedLabel.setBounds(5, 225, 200, 40);
     dynamicRangeLabel.setBounds(5, 270, 200, 40);
     stereoCorrelationLabel.setBounds(5, 315, 200, 40);
+    stereoCorrelationConvolutionLabel.setBounds(5, 360, 200, 40);
     resetButton.setBounds(5, 210, 50, 20);
     monoButton.setBounds(60, 210, 50, 20);
 //    gainSlider.setBoundsRelative(0.05, 0.85, 0.1, 0.1);
@@ -184,9 +190,11 @@ void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcas
     
     float averageStereoCorrelation = std::accumulate(processor.stereoCorrelation.begin(), processor.stereoCorrelation.end(), 0.0) / 100.;
     
+    float averageStereoConvolutionCorrelation = std::accumulate(processor.stereoCorrelationConvolution.begin(), processor.stereoCorrelationConvolution.end(), 0.0) / 100.;
+    
     dynamicRangeLabel.setText("Dynamic Range: " + String(averageDynamicRange), dontSendNotification);
     stereoCorrelationLabel.setText("Correlation: " + String(averageStereoCorrelation), dontSendNotification);
-    
+    stereoCorrelationConvolutionLabel.setText("Convolution Correlation: " + String(averageStereoConvolutionCorrelation), dontSendNotification);
 }
 
 void TestPluginAudioProcessorEditor::reset()

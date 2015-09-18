@@ -140,12 +140,9 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     const int numSamples = buffer.getNumSamples();
     
-    for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+//    for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
+//        buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    
     // Get left channel FFT (used for logo).
     const float* channelData = buffer.getReadPointer (0);
     zeromem (forwardLeftFFTData, numSamples * sizeof (float));
@@ -157,7 +154,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     memcpy (forwardRightFFTData, channelData, numSamples * sizeof(float));
     
 //    forwardFFT->performFrequencyOnlyForwardTransform (forwardLeftFFTData);
-    
+
     forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData);
     forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData);
     
@@ -170,13 +167,13 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         logoFFTBins[i] = int(std::abs(val)); // Get magnitude
     }
     
-
-    
     // Effectively Rxx(0) is the energy in left channel. See Cross correlation comments below.
     float leftEnergy = 0;
     
     // Effectively Ryy(0) is the energy in right channel.
     float rightEnergy = 0;
+    
+    float Rxy0 = 0;
     
     // Hold the sum of each frame's stereo correlation.
     float stereoCorrelationSum = 0;
@@ -201,17 +198,17 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             // e.g. see p 116 Ch.2 DSP Proakis/Manolakis.
             // We have DFT of l and r so multiply.
             
-            std::complex<float> leftVal(((FFT::Complex*)forwardLeftFFTData)[i].r, ((FFT::Complex*)forwardLeftFFTData)[i].i);
-            std::complex<float> rightVal(((FFT::Complex*)forwardRightFFTData)[i].r, ((FFT::Complex*)forwardRightFFTData)[i].i);
-            
-            std::complex<float> product = leftVal * rightVal;
-            ((FFT::Complex*)multipliedFFT)[i].r = product.real();
-            ((FFT::Complex*)multipliedFFT)[i].i = product.imag();
+//            std::complex<float> leftVal(((FFT::Complex*)forwardLeftFFTData)[i].r, ((FFT::Complex*)forwardLeftFFTData)[i].i);
+//            std::complex<float> rightVal(((FFT::Complex*)forwardRightFFTData)[i].r, ((FFT::Complex*)forwardRightFFTData)[i].i);
+//            
+//            std::complex<float> product = leftVal * rightVal;
+//            ((FFT::Complex*)multipliedFFT)[i].r = product.real();
+//            ((FFT::Complex*)multipliedFFT)[i].i = product.imag();
             
             // Now need energy of l and r
-            leftEnergy += leftChannelData[i] * leftChannelData[i];
-            rightEnergy += rightChannelData[i] * rightChannelData[i];
-            
+            leftEnergy += (leftChannelData[i] * leftChannelData[i]);
+            rightEnergy += (rightChannelData[i] * rightChannelData[i]);
+            Rxy0 += leftChannelData[i] * rightChannelData[i];
         
             // ************ Headroom! ************
             if (!headroomBreached)
@@ -233,7 +230,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             float absFrameSum = std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]);
             blockAbsFrameSum += absFrameSum;
             
-            // Calculate correlation using abs(l+r / (abs(l) + abs(r)))
+            // Calculate correlation using abs(l+r / (abs(l) + abs(r))) method
             stereoCorrelationSum += absFrameSum == 0 ? 1 : std::abs(frameSum / absFrameSum);
             
             // ************ Mono playback! ************
@@ -251,14 +248,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     }
     
     // Calculate inverse FFT for cross correlation un-normalised value.
-    inverseFFT->performRealOnlyInverseTransform(multipliedFFT);
-    
-    // Sum the real values returned from the inverse FFT to get Rxy(0).
-    float Rxy = 0;
-    for (int i = 0; i <=numSamples; i++)
-    {
-        Rxy+= multipliedFFT[i];
-    }
+//    inverseFFT->performRealOnlyInverseTransform(multipliedFFT);
 
     // Calculate average abs sample value for this block
     float blockAverage = (blockAbsFrameSum / 2) / static_cast<float>(numSamples);
@@ -281,7 +271,13 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         stereoCorrelation[dynamicRangeCounter] = stereoCorrelationSum / static_cast<float>(numSamples);
         
         // Again, see Proakis.
-        stereoCorrelationConvolution[dynamicRangeCounter] = Rxy/(sqrtf(leftEnergy * rightEnergy));
+        if (leftEnergy == 0 || rightEnergy == 0)
+        {
+            stereoCorrelationConvolution[dynamicRangeCounter] = 0;
+        } else
+        {
+            stereoCorrelationConvolution[dynamicRangeCounter] = Rxy0/(sqrtf(leftEnergy * rightEnergy));
+        }
         
     } else
     {
