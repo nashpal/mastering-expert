@@ -10,10 +10,10 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-
+#include <complex>
 
 //==============================================================================
-TestPluginAudioProcessor::TestPluginAudioProcessor() : shortFFT(int(ShortFFT::Order), false), longFFT(int(LongFFT::Order), false)
+TestPluginAudioProcessor::TestPluginAudioProcessor()
 {
     // Set up our parameters. The base class will delete them for us.
     addParameter (gain  = new FloatParameter (defaultGain,  "Gain"));
@@ -107,17 +107,24 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    if (getNumInputChannels() < 2)
-    {
-        // Only want stereo...
-    }
+    int fftOrder = log2f(samplesPerBlock);
+    forwardFFT = new FFT(fftOrder, false);
+    inverseFFT = new FFT(fftOrder, true);
+    forwardLeftFFTData = new float[2 * samplesPerBlock]; // To hold real and Complex
+    forwardRightFFTData = new float[2 * samplesPerBlock]; // To hold real and Complex
+    multipliedFFT = new float[2 * samplesPerBlock];
 }
 
 void TestPluginAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
-    int x = 4;
+    delete forwardFFT;
+    delete inverseFFT;
+    delete [] forwardLeftFFTData;
+    delete [] forwardRightFFTData;
+    delete [] multipliedFFT;
+
 }
 
 void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
@@ -139,22 +146,43 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // This is the place where you'd normally do the guts of your plugin's
     // audio processing...
     
-    // Get left channel FFT for logo.
+    // Get left channel FFT (used for logo).
     const float* channelData = buffer.getReadPointer (0);
-    zeromem (shortFFTData, sizeof (shortFFTData));
-    memcpy (shortFFTData, channelData, int(ShortFFT::Size) * sizeof(float));
-    shortFFT.performFrequencyOnlyForwardTransform (shortFFTData);
+    zeromem (forwardLeftFFTData, numSamples * sizeof (float));
+    memcpy (forwardLeftFFTData, channelData, numSamples * sizeof(float));
     
+    // Now get right channel.
+    channelData = buffer.getReadPointer (1);
+    zeromem (forwardRightFFTData, numSamples * sizeof (float));
+    memcpy (forwardRightFFTData, channelData, numSamples * sizeof(float));
     
-    // Get bins at 1,2,4,8, ...
+//    forwardFFT->performFrequencyOnlyForwardTransform (forwardLeftFFTData);
+    
+    forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData);
+    forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData);
+    
+    // We've only got 8 bars in the logo. Get bins at 1,2,4,8, ...
     for (int i = 0, j = 1; i < 8; i++, j*=2)
     {
-        logoFFTBins[i] = int(shortFFTData[j]);
+//        logoFFTBins[i] = int(forwardLeftFFTData[j]);
+        
+        std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[j].r, ((FFT::Complex*)forwardLeftFFTData)[j].i);
+        logoFFTBins[i] = int(std::abs(val)); // Get magnitude
     }
     
+
     
-    // Hold the sum of all summed L/R samples for average.
-    float blockFrameSum = 0;
+    // Effectively Rxx(0) is the energy in left channel. See Cross correlation comments below.
+    float leftEnergy = 0;
+    
+    // Effectively Ryy(0) is the energy in right channel.
+    float rightEnergy = 0;
+    
+    // Hold the sum of each frame's stereo correlation.
+    float stereoCorrelationSum = 0;
+    
+    // Hold the sum of all summed abs L/R samples for average.
+    float blockAbsFrameSum = 0;
     
     // Hold the block's max sample value from left or right.
     float blockMax = 0;
@@ -166,12 +194,32 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             float* leftChannelData = buffer.getWritePointer (0);
             float* rightChannelData = buffer.getWritePointer (1);
             
-            // Headroom!
+            // ************ Cross correlation ************
+            
+            // Cross correlation between l and r is Rxy(0) = x(0) * y(0) (* = convolution, left = x, right = y).
+            // Normalised to (-1, 1) is Rxy(0) / Sqrt(Rxx(0) Ryy(0)).
+            // e.g. see p 116 Ch.2 DSP Proakis/Manolakis.
+            // We have DFT of l and r so multiply.
+            
+            std::complex<float> leftVal(((FFT::Complex*)forwardLeftFFTData)[i].r, ((FFT::Complex*)forwardLeftFFTData)[i].i);
+            std::complex<float> rightVal(((FFT::Complex*)forwardRightFFTData)[i].r, ((FFT::Complex*)forwardRightFFTData)[i].i);
+            
+            std::complex<float> product = leftVal * rightVal;
+            ((FFT::Complex*)multipliedFFT)[i].r = product.real();
+            ((FFT::Complex*)multipliedFFT)[i].i = product.imag();
+            
+            // Now need energy of l and r
+            leftEnergy += leftChannelData[i] * leftChannelData[i];
+            rightEnergy += rightChannelData[i] * rightChannelData[i];
+            
+        
+            // ************ Headroom! ************
             if (!headroomBreached)
             {
                 headroomBreached = std::abs(leftChannelData[i]) > 0.5 || std::abs(rightChannelData[i]) > 0.5 ? true : false;
             }
             
+            // Get the maximum sample in this block for dynamic range calculation.
             if (blockMax < std::abs(leftChannelData[i]))
             {
                 blockMax = std::abs(leftChannelData[i]);
@@ -182,32 +230,62 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             }
            
             float frameSum = leftChannelData[i] + rightChannelData[i];
-            blockFrameSum += (std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]));
+            float absFrameSum = std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]);
+            blockAbsFrameSum += absFrameSum;
             
-            // Mono!
+            // Calculate correlation using abs(l+r / (abs(l) + abs(r)))
+            stereoCorrelationSum += absFrameSum == 0 ? 1 : std::abs(frameSum / absFrameSum);
+            
+            // ************ Mono playback! ************
             if (mono)
             {
                 float frameSumAverage = frameSum / 2.f;
             
                 leftChannelData[i] = frameSumAverage;
                 rightChannelData[i] = frameSumAverage;
+                
             }
             
-            // Dynamic range
 //            channelData[i] *= gain->getValue();
         }
     }
     
-    // Calculate average value for this block
-    float blockAverage = (blockFrameSum / 2) / static_cast<float>(numSamples);
+    // Calculate inverse FFT for cross correlation un-normalised value.
+    inverseFFT->performRealOnlyInverseTransform(multipliedFFT);
+    
+    // Sum the real values returned from the inverse FFT to get Rxy(0).
+    float Rxy = 0;
+    for (int i = 0; i <=numSamples; i++)
+    {
+        Rxy+= multipliedFFT[i];
+    }
+
+    // Calculate average abs sample value for this block
+    float blockAverage = (blockAbsFrameSum / 2) / static_cast<float>(numSamples);
     
     if (dynamicRangeCounter < 100)
     {
         // Use this value to get dB, i.e. 20log(blockMax/blockAverage).
-        dynamicRange[dynamicRangeCounter] = 20 * logf(blockMax / blockAverage);
+        if (blockAverage == 0)
+        {
+            blockAverage = 0.001;
+        }
+        if (blockMax == 0)
+        {
+            blockMax = 0.001;
+        }
+        
+        float val = 20 * log10f(blockMax / blockAverage);
+        dynamicRange[dynamicRangeCounter] = val;
+        
+        stereoCorrelation[dynamicRangeCounter] = stereoCorrelationSum / static_cast<float>(numSamples);
+        
+        // Again, see Proakis.
+        stereoCorrelationConvolution[dynamicRangeCounter] = Rxy/(sqrtf(leftEnergy * rightEnergy));
+        
     } else
     {
-        // Notify the editor to check the average value of dynamicRange.
+        // Notify the editor to check the average value of dynamicRange and stereo correlation.
         sendChangeMessage();
         dynamicRangeCounter = 0;
     }

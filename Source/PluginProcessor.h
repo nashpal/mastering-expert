@@ -131,22 +131,32 @@ public:
     // Determine whether to sum stereo;
     bool mono = false;
     
+    // TODO: Change name of this var.
     // How many dynmaic range measurements have we taken.
     int dynamicRangeCounter = 0;
     
-    // Hold the dynmaic range for a lock, max - average.
+    // Hold the dynmaic range for 100 blocks.
     std::array<float, 100>  dynamicRange {};
+    
+    // Hold the stereo correlation for 100 blocks. Using abs and sum of l/r method.
+    std::array<float, 100> stereoCorrelation {};
+
+    // Hold the stereo correlation for 100 blocks. Using convolution method.
+    std::array<float, 100> stereoCorrelationConvolution {};
+        
     
 private:
     
     // Used for logo
-    FFT shortFFT;
+    FFT* forwardFFT;
+    FFT* inverseFFT;
     
-    // Used for analysis.
-    FFT longFFT;
+    float* forwardLeftFFTData;
+    float* forwardRightFFTData;
     
-    float shortFFTData [2 * int(ShortFFT::Size)];
-    float longFFTData [2 * int(LongFFT::Size)];
+    // Used to hold result of multilying l and r for correlation.
+    float* multipliedFFT;
+        
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TestPluginAudioProcessor)
 };

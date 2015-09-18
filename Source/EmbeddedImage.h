@@ -64,7 +64,7 @@ public:
 
 private:
     //[UserVariables]   -- You can add your own custom variables in this section.
-    std::array<float, 8> fftBins;
+    std::array<float, 8> fftBins { 10, 20, 30, 40, 40, 30, 20, 10 };
     //[/UserVariables]
 
     //==============================================================================

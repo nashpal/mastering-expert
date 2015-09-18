@@ -15,9 +15,10 @@
 //==============================================================================
 TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioProcessor& p)
     :   AudioProcessorEditor (p),
-        headroomBreachedLabel("", "Headroom OK"),
+        headroomBreachedLabel("", "Headroom: OK"),
         gainLabel ("", "Throughput level:"),
-        dynamicRangeLabel("", "0dB"),
+        dynamicRangeLabel("", "Dynamic Range: 0dB"),
+        stereoCorrelationLabel("", "Correlation: 0"),
         gainSlider ("gain"),
         resetButton("Reset"),
         monoButton("Mono")
@@ -37,6 +38,9 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addAndMakeVisible(dynamicRangeLabel);
     dynamicRangeLabel.setFont (Font (15.0f));
     
+    addAndMakeVisible(stereoCorrelationLabel);
+    stereoCorrelationLabel.setFont(Font(15.0f));
+    
 //    addAndMakeVisible (gainSlider);
 //    gainSlider.setSliderStyle (Slider::Rotary);
 //    gainSlider.addListener (this);
@@ -48,7 +52,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (540, 300);
+    setSize (540, 400);
     
     getProcessor().addChangeListener(this);
     
@@ -57,6 +61,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
 
 TestPluginAudioProcessorEditor::~TestPluginAudioProcessorEditor()
 {
+    getProcessor().removeChangeListener(this);
 }
 
 //==============================================================================
@@ -77,6 +82,7 @@ void TestPluginAudioProcessorEditor::resized()
     logo.setBounds(0, 0, 540, 200);
     headroomBreachedLabel.setBounds(5, 225, 200, 40);
     dynamicRangeLabel.setBounds(5, 270, 200, 40);
+    stereoCorrelationLabel.setBounds(5, 315, 200, 40);
     resetButton.setBounds(5, 210, 50, 20);
     monoButton.setBounds(60, 210, 50, 20);
 //    gainSlider.setBoundsRelative(0.05, 0.85, 0.1, 0.1);
@@ -152,11 +158,18 @@ void TestPluginAudioProcessorEditor::timerCallback()
         
         if (processor.headroomBreached)
         {
-            headroomBreachedLabel.setText("Headroom Breached", dontSendNotification);
+            headroomBreachedLabel.setText("Headroom: Breached", dontSendNotification);
         } else
         {
-            headroomBreachedLabel.setText("Headroom OK", dontSendNotification);
+            headroomBreachedLabel.setText("Headroom: OK", dontSendNotification);
         }
+        
+    } else
+    {
+        // Reset the logo
+        logo.setFFTBins({ 10, 20, 30, 40, 40, 30, 20, 10 });
+        
+        logo.repaint();
     }
 }
 
@@ -169,7 +182,10 @@ void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcas
     // but this is only a heuristic method anyway.
     float averageDynamicRange = std::accumulate(processor.dynamicRange.begin(), processor.dynamicRange.end(), 0.0) / 100.;
     
-    dynamicRangeLabel.setText(String(averageDynamicRange), dontSendNotification);
+    float averageStereoCorrelation = std::accumulate(processor.stereoCorrelation.begin(), processor.stereoCorrelation.end(), 0.0) / 100.;
+    
+    dynamicRangeLabel.setText("Dynamic Range: " + String(averageDynamicRange), dontSendNotification);
+    stereoCorrelationLabel.setText("Correlation: " + String(averageStereoCorrelation), dontSendNotification);
     
 }
 

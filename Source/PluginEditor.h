@@ -53,6 +53,7 @@ private:
     
     Label headroomBreachedLabel;
     Label dynamicRangeLabel;
+    Label stereoCorrelationLabel;
     
     TextButton resetButton;
     TextButton monoButton;

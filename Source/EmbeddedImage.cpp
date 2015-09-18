@@ -150,7 +150,7 @@ EmbeddedImage::EmbeddedImage ()
     logoPath.loadPathFromData (pathData, sizeof (pathData));
     maskPath.loadPathFromData (maskData, sizeof (maskData));
     
-    
+
     //[/Constructor_pre]
 
 //    addAndMakeVisible (image = new ImageComponent(), 0);

@@ -554,7 +554,7 @@
 		8A2C1B81D89EEF0DB5FCEA15 /* juce_FileInputStream.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_FileInputStream.h; path = ../../../modules/juce_core/files/juce_FileInputStream.h; sourceTree = SOURCE_ROOT; };
 		8AB8CEE5198C4710105DFB34 /* juce_StretchableObjectResizer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_StretchableObjectResizer.h; path = ../../../modules/juce_gui_basics/layout/juce_StretchableObjectResizer.h; sourceTree = SOURCE_ROOT; };
 		8AC9FED57EE137B8F7149AF6 /* juce_Identifier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_Identifier.h; path = ../../../modules/juce_core/text/juce_Identifier.h; sourceTree = SOURCE_ROOT; };
-		8AF2E4A859F32CBE8097FD7F /* TestPlugin.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TestPlugin.component; sourceTree = BUILT_PRODUCTS_DIR; };
+		8AF2E4A859F32CBE8097FD7F /* MasteringExpert.component */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MasteringExpert.component; sourceTree = BUILT_PRODUCTS_DIR; };
 		8B22117BCB8BD1BB20B8E1F0 /* juce_linux_Threads.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_linux_Threads.cpp; path = ../../../modules/juce_core/native/juce_linux_Threads.cpp; sourceTree = SOURCE_ROOT; };
 		8C403D3FEE5E3CF7B0D062EF /* juce_AudioPluginFormat.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_AudioPluginFormat.cpp; path = ../../../modules/juce_audio_processors/format/juce_AudioPluginFormat.cpp; sourceTree = SOURCE_ROOT; };
 		8C43A782517445A2DAB072BF /* juce_ValueTreeSynchroniser.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_ValueTreeSynchroniser.h; path = ../../../modules/juce_data_structures/values/juce_ValueTreeSynchroniser.h; sourceTree = SOURCE_ROOT; };
@@ -1525,7 +1525,7 @@
 		590EDD7131B9F0E1F1406CB6 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8AF2E4A859F32CBE8097FD7F /* TestPlugin.component */,
+				8AF2E4A859F32CBE8097FD7F /* MasteringExpert.component */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -2703,7 +2703,7 @@
 			name = MasteringExpert;
 			productInstallPath = "$(HOME)/Library/Audio/Plug-Ins/Components/";
 			productName = MasteringExpert;
-			productReference = 8AF2E4A859F32CBE8097FD7F /* TestPlugin.component */;
+			productReference = 8AF2E4A859F32CBE8097FD7F /* MasteringExpert.component */;
 			productType = "com.apple.product-type.bundle";
 		};
 /* End PBXNativeTarget section */
