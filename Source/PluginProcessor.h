@@ -124,6 +124,9 @@ public:
 
     std::array<float, 8> logoFFTBins;
     
+    // Points for vector scope.
+    std::array<juce::Point<float>, 100> vectorScopePoints;
+    
     bool headroomBreached = false;
     
     AudioPlayHead::CurrentPositionInfo lastPosInfo;

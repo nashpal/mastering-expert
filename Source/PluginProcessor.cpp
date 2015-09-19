@@ -140,6 +140,10 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     const int numSamples = buffer.getNumSamples();
     
+    // Just need 100 points for the vector scope
+    int vectorScopeStride = floorf(numSamples / 100);
+    int vectorScopeCounter = 0;
+    
 //    for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
 //        buffer.clear (i, 0, buffer.getNumSamples());
 
@@ -152,17 +156,15 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     channelData = buffer.getReadPointer (1);
     zeromem (forwardRightFFTData, numSamples * sizeof (float));
     memcpy (forwardRightFFTData, channelData, numSamples * sizeof(float));
-    
-//    forwardFFT->performFrequencyOnlyForwardTransform (forwardLeftFFTData);
 
     forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData);
     forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData);
     
+    // TODO: Use better bins or aaverage across bins.
+    // Maybe don't need this every call.
     // We've only got 8 bars in the logo. Get bins at 1,2,4,8, ...
     for (int i = 0, j = 1; i < 8; i++, j*=2)
     {
-//        logoFFTBins[i] = int(forwardLeftFFTData[j]);
-        
         std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[j].r, ((FFT::Complex*)forwardLeftFFTData)[j].i);
         logoFFTBins[i] = int(std::abs(val)); // Get magnitude
     }
@@ -183,6 +185,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     // Hold the block's max sample value from left or right.
     float blockMax = 0;
+
     
     if (getNumInputChannels() == 2 && getNumOutputChannels() == 2)
     {
@@ -191,12 +194,18 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             float* leftChannelData = buffer.getWritePointer (0);
             float* rightChannelData = buffer.getWritePointer (1);
             
+            
+            // ************ Vectorscope ************
+            if (i % vectorScopeStride == 0)
+            {
+                vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(leftChannelData[i], rightChannelData[i]);
+            }
+            
             // ************ Cross correlation ************
             
-            // Cross correlation between l and r is Rxy(0) = x(0) * y(0) (* = convolution, left = x, right = y).
+            // Cross correlation between l and r is Rxy(0) = Sum (x(n) * y(n)) (left = x, right = y).
             // Normalised to (-1, 1) is Rxy(0) / Sqrt(Rxx(0) Ryy(0)).
-            // e.g. see p 116 Ch.2 DSP Proakis/Manolakis.
-            // We have DFT of l and r so multiply.
+            // e.g. see p 114-116 Ch.2 DSP Proakis/Manolakis 2nd Edition.
             
 //            std::complex<float> leftVal(((FFT::Complex*)forwardLeftFFTData)[i].r, ((FFT::Complex*)forwardLeftFFTData)[i].i);
 //            std::complex<float> rightVal(((FFT::Complex*)forwardRightFFTData)[i].r, ((FFT::Complex*)forwardRightFFTData)[i].i);

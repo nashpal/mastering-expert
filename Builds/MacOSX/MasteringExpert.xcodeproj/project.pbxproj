@@ -58,6 +58,7 @@
 		BEAD1BADD5C377D352971F6F /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 14D330C3D2037B4A8A235208 /* AudioToolbox.framework */; };
 		BFA3E8AEBF64F941F5D865CC /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BCC116485B1384898D9DDF53 /* CAAUParameter.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		C0FF1D8013AA3DC00AC6E02A /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B64C042423B46665C8654A95 /* AudioUnit.framework */; };
+		C6EE96BA1BAC6DFF00D7FA29 /* VectorScope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C6EE96B81BAC6DFF00D7FA29 /* VectorScope.cpp */; };
 		CE6C63762C23F8AC7BD6B4D1 /* juce_AAX_Wrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 90AD3CDF778E768D2A42293F /* juce_AAX_Wrapper.mm */; };
 		D1F4EBA9973292652BD48742 /* juce_RTAS_DigiCode1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 15D6FEBDC6DAF18A2BFF6016 /* juce_RTAS_DigiCode1.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		D5D6E989B0E32883C9494B91 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 44E969BE9C6728E94A80BBA8 /* AUBase.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
@@ -757,6 +758,8 @@
 		C5B5730615DBBA3CC4F636E2 /* juce_Socket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_Socket.h; path = ../../../modules/juce_core/network/juce_Socket.h; sourceTree = SOURCE_ROOT; };
 		C5CEA170CD272AA4D3331853 /* juce_ReferenceCountedArray.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_ReferenceCountedArray.h; path = ../../../modules/juce_core/containers/juce_ReferenceCountedArray.h; sourceTree = SOURCE_ROOT; };
 		C6EE1E049FB818E17B9AB249 /* juce_Font.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_Font.cpp; path = ../../../modules/juce_graphics/fonts/juce_Font.cpp; sourceTree = SOURCE_ROOT; };
+		C6EE96B81BAC6DFF00D7FA29 /* VectorScope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VectorScope.cpp; path = ../../Source/VectorScope.cpp; sourceTree = "<group>"; };
+		C6EE96B91BAC6DFF00D7FA29 /* VectorScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VectorScope.h; path = ../../Source/VectorScope.h; sourceTree = "<group>"; };
 		C6EFA48FCAFD695E2E57BF2E /* juce_FilenameComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_FilenameComponent.cpp; path = ../../../modules/juce_gui_basics/filebrowser/juce_FilenameComponent.cpp; sourceTree = SOURCE_ROOT; };
 		C6FDA7EA5D32BAB291951564 /* juce_KeyListener.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_KeyListener.h; path = ../../../modules/juce_gui_basics/keyboard/juce_KeyListener.h; sourceTree = SOURCE_ROOT; };
 		C743D2E5AF3AA4C5123360AA /* juce_NamedPipe.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_NamedPipe.cpp; path = ../../../modules/juce_core/network/juce_NamedPipe.cpp; sourceTree = SOURCE_ROOT; };
@@ -1853,6 +1856,8 @@
 			children = (
 				CA100EA4555649108989CF67 /* EmbeddedImage.cpp */,
 				52D73A36532C020D710E313C /* EmbeddedImage.h */,
+				C6EE96B81BAC6DFF00D7FA29 /* VectorScope.cpp */,
+				C6EE96B91BAC6DFF00D7FA29 /* VectorScope.h */,
 				D5E4FCB03D6DC4DEA0E72972 /* Source */,
 			);
 			name = MasteringExpert;
@@ -2783,6 +2788,7 @@
 				6A7883ED99A1961B9775922B /* AUInputElement.cpp in Sources */,
 				A967D16AD37E88AFD23559D3 /* AUMIDIBase.cpp in Sources */,
 				615395594C1AAE0A88CE4327 /* AUMIDIEffectBase.cpp in Sources */,
+				C6EE96BA1BAC6DFF00D7FA29 /* VectorScope.cpp in Sources */,
 				593F7F82A1387190429D01B8 /* AUOutputBase.cpp in Sources */,
 				A897FAF5E08115CE8D561E07 /* AUOutputElement.cpp in Sources */,
 				409CB21B9871B791F4053ED4 /* AUScopeElement.cpp in Sources */,

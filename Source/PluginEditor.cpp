@@ -26,6 +26,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
 {
     
     addAndMakeVisible(&logo);
+    addAndMakeVisible(vectorScope);
     
     addAndMakeVisible(headroomBreachedLabel);
     headroomBreachedLabel.setFont (Font (15.0f));
@@ -57,7 +58,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (540, 410);
+    setSize (1040, 410);
     
     getProcessor().addChangeListener(this);
     
@@ -85,6 +86,8 @@ void TestPluginAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     logo.setBounds(0, 0, 540, 200);
+    vectorScope.setBounds(550, 0, 410, 410);
+    
     headroomBreachedLabel.setBounds(5, 225, 200, 40);
     dynamicRangeLabel.setBounds(5, 270, 200, 40);
     stereoCorrelationLabel.setBounds(5, 315, 200, 40);
@@ -169,6 +172,10 @@ void TestPluginAudioProcessorEditor::timerCallback()
         {
             headroomBreachedLabel.setText("Headroom: OK", dontSendNotification);
         }
+        
+        vectorScope.setCurrentPointArray(processor.vectorScopePoints);
+        
+        vectorScope.repaint();
         
     } else
     {

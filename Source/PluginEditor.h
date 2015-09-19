@@ -14,6 +14,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
 #include "EmbeddedImage.h"
+#include "VectorScope.h"
 
 //==============================================================================
 /**
@@ -48,6 +49,7 @@ private:
     void reset();
     
     EmbeddedImage logo;
+    VectorScope vectorScope;
     Slider gainSlider;
     Label gainLabel;
     
