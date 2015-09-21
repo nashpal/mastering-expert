@@ -59,6 +59,7 @@
 		BFA3E8AEBF64F941F5D865CC /* CAAUParameter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = BCC116485B1384898D9DDF53 /* CAAUParameter.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		C0FF1D8013AA3DC00AC6E02A /* AudioUnit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B64C042423B46665C8654A95 /* AudioUnit.framework */; };
 		C6EE96BA1BAC6DFF00D7FA29 /* VectorScope.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C6EE96B81BAC6DFF00D7FA29 /* VectorScope.cpp */; };
+		C6EE96BE1BB0681F00D7FA29 /* LevelMeter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C6EE96BC1BB0681F00D7FA29 /* LevelMeter.cpp */; };
 		CE6C63762C23F8AC7BD6B4D1 /* juce_AAX_Wrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 90AD3CDF778E768D2A42293F /* juce_AAX_Wrapper.mm */; };
 		D1F4EBA9973292652BD48742 /* juce_RTAS_DigiCode1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 15D6FEBDC6DAF18A2BFF6016 /* juce_RTAS_DigiCode1.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
 		D5D6E989B0E32883C9494B91 /* AUBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 44E969BE9C6728E94A80BBA8 /* AUBase.cpp */; settings = {COMPILER_FLAGS = "-w"; }; };
@@ -760,6 +761,8 @@
 		C6EE1E049FB818E17B9AB249 /* juce_Font.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_Font.cpp; path = ../../../modules/juce_graphics/fonts/juce_Font.cpp; sourceTree = SOURCE_ROOT; };
 		C6EE96B81BAC6DFF00D7FA29 /* VectorScope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VectorScope.cpp; path = ../../Source/VectorScope.cpp; sourceTree = "<group>"; };
 		C6EE96B91BAC6DFF00D7FA29 /* VectorScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VectorScope.h; path = ../../Source/VectorScope.h; sourceTree = "<group>"; };
+		C6EE96BC1BB0681F00D7FA29 /* LevelMeter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LevelMeter.cpp; path = ../../Source/LevelMeter.cpp; sourceTree = "<group>"; };
+		C6EE96BD1BB0681F00D7FA29 /* LevelMeter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LevelMeter.h; path = ../../Source/LevelMeter.h; sourceTree = "<group>"; };
 		C6EFA48FCAFD695E2E57BF2E /* juce_FilenameComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_FilenameComponent.cpp; path = ../../../modules/juce_gui_basics/filebrowser/juce_FilenameComponent.cpp; sourceTree = SOURCE_ROOT; };
 		C6FDA7EA5D32BAB291951564 /* juce_KeyListener.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_KeyListener.h; path = ../../../modules/juce_gui_basics/keyboard/juce_KeyListener.h; sourceTree = SOURCE_ROOT; };
 		C743D2E5AF3AA4C5123360AA /* juce_NamedPipe.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_NamedPipe.cpp; path = ../../../modules/juce_core/network/juce_NamedPipe.cpp; sourceTree = SOURCE_ROOT; };
@@ -1858,6 +1861,8 @@
 				52D73A36532C020D710E313C /* EmbeddedImage.h */,
 				C6EE96B81BAC6DFF00D7FA29 /* VectorScope.cpp */,
 				C6EE96B91BAC6DFF00D7FA29 /* VectorScope.h */,
+				C6EE96BC1BB0681F00D7FA29 /* LevelMeter.cpp */,
+				C6EE96BD1BB0681F00D7FA29 /* LevelMeter.h */,
 				D5E4FCB03D6DC4DEA0E72972 /* Source */,
 			);
 			name = MasteringExpert;
@@ -2795,6 +2800,7 @@
 				6116FF8449B643A160338F7D /* CAAudioChannelLayout.cpp in Sources */,
 				BFA3E8AEBF64F941F5D865CC /* CAAUParameter.cpp in Sources */,
 				5F2F94A0F947740D9043AEEB /* CAMutex.cpp in Sources */,
+				C6EE96BE1BB0681F00D7FA29 /* LevelMeter.cpp in Sources */,
 				1FCB3C7BFBA8C746C3532166 /* CarbonEventHandler.cpp in Sources */,
 				BC5977F15E9AAE08AB6E39FB /* CAStreamBasicDescription.cpp in Sources */,
 				2BEC425F8E8412DC77875123 /* CAVectorUnit.cpp in Sources */,

@@ -15,12 +15,12 @@
 #include "PluginProcessor.h"
 #include "EmbeddedImage.h"
 #include "VectorScope.h"
+#include "LevelMeter.h"
 
 //==============================================================================
 /**
 */
 class TestPluginAudioProcessorEditor  : public AudioProcessorEditor,
-                                        public Slider::Listener,
                                         public Button::Listener,
                                         public ChangeListener, // For infrequent broadcasts from processor.
                                         public Timer
@@ -32,10 +32,6 @@ public:
     //==============================================================================
     void paint (Graphics&) override;
     void resized() override;
-    
-    void sliderValueChanged (Slider*) override;
-    void sliderDragStarted  (Slider*) override;
-    void sliderDragEnded    (Slider*) override;
     
     void buttonClicked      (Button*) override;
     
@@ -50,23 +46,26 @@ private:
     
     EmbeddedImage logo;
     VectorScope vectorScope;
-    Slider gainSlider;
-    Label gainLabel;
     
     Label headroomBreachedLabel;
     Label dynamicRangeLabel;
-    Label stereoCorrelationLabel;
     Label stereoCorrelationConvolutionLabel;
     
     TextButton resetButton;
     TextButton monoButton;
     
+    LevelMeter leftLevel;
+    LevelMeter rightLevel;
+    LevelMeter dynamicHeadroomLevel;
+    LevelMeter stereoCorrelationLevel;
+    
+    // Need to fade out vector scope if play has stopped.
+    int vectosScopeFadeoutCount = 0;
+    
     TestPluginAudioProcessor& getProcessor() const
     {
         return static_cast<TestPluginAudioProcessor&> (processor);
     }
-    
-    AudioProcessorParameter* getParameterFromSlider (const Slider*) const;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TestPluginAudioProcessorEditor)
 };

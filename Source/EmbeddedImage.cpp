@@ -216,14 +216,16 @@ void EmbeddedImage::paint (Graphics& g)
 
     }
     
-    g.setColour (Colours::orange);
+    g.setColour (Colours::black);
     g.fillPath (wavePath);
     
     AffineTransform translate = AffineTransform::translation(2, 7);
     g.setColour (Colours::white);
     g.fillPath (maskPath, translate);
     
-    g.setColour (Colours::orange);
+
+    
+    g.setColour (Colours::black);
     g.fillPath (logoPath, RectanglePlacement (RectanglePlacement::stretchToFit)
                 .getTransformToFit (logoPath.getBounds(),
                                     getLocalBounds().toFloat()));

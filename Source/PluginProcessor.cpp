@@ -15,8 +15,7 @@
 //==============================================================================
 TestPluginAudioProcessor::TestPluginAudioProcessor()
 {
-    // Set up our parameters. The base class will delete them for us.
-    addParameter (gain  = new FloatParameter (defaultGain,  "Gain"));
+
 }
 
 TestPluginAudioProcessor::~TestPluginAudioProcessor()
@@ -141,7 +140,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     const int numSamples = buffer.getNumSamples();
     
     // Just need 100 points for the vector scope
-    int vectorScopeStride = floorf(numSamples / 100);
+    int vectorScopeStride = floorf(numSamples / numberVectorPoints);
     int vectorScopeCounter = 0;
     
 //    for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
@@ -177,9 +176,6 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     float Rxy0 = 0;
     
-    // Hold the sum of each frame's stereo correlation.
-    float stereoCorrelationSum = 0;
-    
     // Hold the sum of all summed abs L/R samples for average.
     float blockAbsFrameSum = 0;
     
@@ -193,13 +189,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         {
             float* leftChannelData = buffer.getWritePointer (0);
             float* rightChannelData = buffer.getWritePointer (1);
-            
-            
-            // ************ Vectorscope ************
-            if (i % vectorScopeStride == 0)
-            {
-                vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(leftChannelData[i], rightChannelData[i]);
-            }
+
             
             // ************ Cross correlation ************
             
@@ -220,10 +210,9 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             Rxy0 += leftChannelData[i] * rightChannelData[i];
         
             // ************ Headroom! ************
-            if (!headroomBreached)
-            {
-                headroomBreached = std::abs(leftChannelData[i]) > 0.5 || std::abs(rightChannelData[i]) > 0.5 ? true : false;
-            }
+
+            headroomBreached = (std::abs(leftChannelData[i]) > 0.5 || std::abs(rightChannelData[i]) > 0.5) ? true : false;
+
             
             // Get the maximum sample in this block for dynamic range calculation.
             if (blockMax < std::abs(leftChannelData[i]))
@@ -239,9 +228,6 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             float absFrameSum = std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]);
             blockAbsFrameSum += absFrameSum;
             
-            // Calculate correlation using abs(l+r / (abs(l) + abs(r))) method
-            stereoCorrelationSum += absFrameSum == 0 ? 1 : std::abs(frameSum / absFrameSum);
-            
             // ************ Mono playback! ************
             if (mono)
             {
@@ -252,13 +238,23 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 
             }
             
+            // ************ Vectorscope ************
+            if (i % vectorScopeStride == 0)
+            {
+                vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(leftChannelData[i], rightChannelData[i]);
+            }
+            
 //            channelData[i] *= gain->getValue();
         }
     }
     
     // Calculate inverse FFT for cross correlation un-normalised value.
 //    inverseFFT->performRealOnlyInverseTransform(multipliedFFT);
-
+    
+    // Calculate RMS
+    leftRMS = sqrtf(leftEnergy / numSamples);
+    rightRMS = sqrtf(rightEnergy / numSamples);
+    
     // Calculate average abs sample value for this block
     float blockAverage = (blockAbsFrameSum / 2) / static_cast<float>(numSamples);
     
@@ -274,10 +270,8 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             blockMax = 0.001;
         }
         
-        float val = 20 * log10f(blockMax / blockAverage);
-        dynamicRange[dynamicRangeCounter] = val;
-        
-        stereoCorrelation[dynamicRangeCounter] = stereoCorrelationSum / static_cast<float>(numSamples);
+//        float val = 20 * log10f(blockMax / blockAverage);
+        dynamicRange[dynamicRangeCounter] = blockMax / blockAverage;
         
         // Again, see Proakis.
         if (leftEnergy == 0 || rightEnergy == 0)

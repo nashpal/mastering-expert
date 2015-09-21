@@ -16,11 +16,8 @@
 TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioProcessor& p)
     :   AudioProcessorEditor (p),
         headroomBreachedLabel("", "Headroom: OK"),
-        gainLabel ("", "Throughput level:"),
         dynamicRangeLabel("", "Dynamic Range: 0dB"),
-        stereoCorrelationLabel("", "Correlation: 0"),
-        stereoCorrelationConvolutionLabel("", "Convolution Correlation: 0"),
-        gainSlider ("gain"),
+        stereoCorrelationConvolutionLabel("", "Stereo Correlation: 0"),
         resetButton("Reset"),
         monoButton("Mono")
 {
@@ -40,21 +37,45 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addAndMakeVisible(dynamicRangeLabel);
     dynamicRangeLabel.setFont (Font (15.0f));
     
-    addAndMakeVisible(stereoCorrelationLabel);
-    stereoCorrelationLabel.setFont(Font(15.0f));
-    
     addAndMakeVisible(stereoCorrelationConvolutionLabel);
     stereoCorrelationConvolutionLabel.setFont(Font(15.0f));
     
     
-//    addAndMakeVisible (gainSlider);
-//    gainSlider.setSliderStyle (Slider::Rotary);
-//    gainSlider.addListener (this);
-//    gainSlider.setRange (0.0, 1.0, 0.01);
+    leftLevel.barCount = 20;
+    leftLevel.minValue = 0;
+    leftLevel.maxValue = 1;
+    leftLevel.overBar = 11;
+    leftLevel.step = 2;
+    leftLevel.overColour = Colours::red;
+    leftLevel.underColour = Colours::green;
+    addAndMakeVisible(leftLevel);
     
-    // add some labels for the sliders..
-//    gainLabel.attachToComponent (&gainSlider, false);
-//    gainLabel.setFont (Font (11.0f));
+    rightLevel.barCount = 20;
+    rightLevel.minValue = 0;
+    rightLevel.maxValue = 1;
+    rightLevel.overBar = 11;
+    rightLevel.step = 2;
+    rightLevel.overColour = Colours::red;
+    rightLevel.underColour = Colours::green;
+    addAndMakeVisible(rightLevel);
+    
+    dynamicHeadroomLevel.barCount = 20;
+    dynamicHeadroomLevel.minValue = 0;
+    dynamicHeadroomLevel.maxValue = 1;
+    dynamicHeadroomLevel.overBar = 11;
+    dynamicHeadroomLevel.step = 2;
+    dynamicHeadroomLevel.overColour = Colours::red;
+    dynamicHeadroomLevel.underColour = Colours::green;
+    addAndMakeVisible(dynamicHeadroomLevel);
+    
+    stereoCorrelationLevel.barCount = 20;
+    stereoCorrelationLevel.minValue = -1;
+    stereoCorrelationLevel.maxValue = 1;
+    stereoCorrelationLevel.overBar = 6;
+    stereoCorrelationLevel.step = 2;
+    stereoCorrelationLevel.overColour = Colours::green;
+    stereoCorrelationLevel.underColour = Colours::red;
+    addAndMakeVisible(stereoCorrelationLevel);
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -62,7 +83,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     getProcessor().addChangeListener(this);
     
-    startTimer (100);
+    startTimer (50);
 }
 
 TestPluginAudioProcessorEditor::~TestPluginAudioProcessorEditor()
@@ -86,26 +107,24 @@ void TestPluginAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     logo.setBounds(0, 0, 540, 200);
-    vectorScope.setBounds(550, 0, 410, 410);
+    vectorScope.setBounds(550, 0, 277, 394);
     
-    headroomBreachedLabel.setBounds(5, 225, 200, 40);
-    dynamicRangeLabel.setBounds(5, 270, 200, 40);
-    stereoCorrelationLabel.setBounds(5, 315, 200, 40);
-    stereoCorrelationConvolutionLabel.setBounds(5, 360, 200, 40);
+    headroomBreachedLabel.setBounds(5, 350, 200, 40);
+    leftLevel.setBounds(5, 255, 16, 100);
+    rightLevel.setBounds(23, 255, 16, 100);
+    
+    dynamicRangeLabel.setBounds(205, 350, 200, 40);
+    dynamicHeadroomLevel.setBounds(205, 250, 16, 100);
+    
+    stereoCorrelationConvolutionLabel.setBounds(405, 350, 200, 40);
+    stereoCorrelationLevel.setBounds(405, 250, 16, 100);
+    
     resetButton.setBounds(5, 210, 50, 20);
     monoButton.setBounds(60, 210, 50, 20);
-//    gainSlider.setBoundsRelative(0.05, 0.85, 0.1, 0.1);
     
 }
 
-AudioProcessorParameter* TestPluginAudioProcessorEditor::getParameterFromSlider (const Slider* slider) const
-{
-    if (slider == &gainSlider)
-        return getProcessor().gain;
 
-    
-    return nullptr;
-}
 
 void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
 {
@@ -125,33 +144,6 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
     
 }
 
-// This is our Slider::Listener callback, when the user drags a slider.
-void TestPluginAudioProcessorEditor::sliderValueChanged (Slider* slider)
-{
-    if (AudioProcessorParameter* param = getParameterFromSlider (slider))
-    {
-        // It's vital to use setValueNotifyingHost to change any parameters that are automatable
-        // by the host, rather than just modifying them directly, otherwise the host won't know
-        // that they've changed.
-        param->setValueNotifyingHost ((float) slider->getValue());
-    }
-}
-
-void TestPluginAudioProcessorEditor::sliderDragStarted (Slider* slider)
-{
-    if (AudioProcessorParameter* param = getParameterFromSlider (slider))
-    {
-        param->beginChangeGesture();
-    }
-}
-
-void TestPluginAudioProcessorEditor::sliderDragEnded (Slider* slider)
-{
-    if (AudioProcessorParameter* param = getParameterFromSlider (slider))
-    {
-        param->endChangeGesture();
-    }
-}
 
 void TestPluginAudioProcessorEditor::timerCallback()
 {
@@ -159,11 +151,15 @@ void TestPluginAudioProcessorEditor::timerCallback()
     
     if (processor.lastPosInfo.isPlaying)
     {
+        vectosScopeFadeoutCount = 0;
+        
         logo.setFFTBins(processor.logoFFTBins);
-        
-        gainSlider.setValue (processor.gain->getValue(), dontSendNotification);
-        
         logo.repaint();
+        
+        leftLevel.levelData = processor.leftRMS;
+        rightLevel.levelData = processor.rightRMS;
+        leftLevel.repaint();
+        rightLevel.repaint();
         
         if (processor.headroomBreached)
         {
@@ -179,6 +175,16 @@ void TestPluginAudioProcessorEditor::timerCallback()
         
     } else
     {
+        
+        if (vectosScopeFadeoutCount < numberVectorBuffers)
+        {
+            // Seems like we have just stopped playing so fade out vectorscope.
+            vectorScope.setCurrentPointArray(std::array<juce::Point<float>, 100>{ juce::Point<float>(0,0) });
+            vectosScopeFadeoutCount++;
+            
+            vectorScope.repaint();
+        }
+        
         // Reset the logo
         logo.setFFTBins({ 10, 20, 30, 40, 40, 30, 20, 10 });
         
@@ -195,13 +201,15 @@ void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcas
     // but this is only a heuristic method anyway.
     float averageDynamicRange = std::accumulate(processor.dynamicRange.begin(), processor.dynamicRange.end(), 0.0) / 100.;
     
-    float averageStereoCorrelation = std::accumulate(processor.stereoCorrelation.begin(), processor.stereoCorrelation.end(), 0.0) / 100.;
-    
     float averageStereoConvolutionCorrelation = std::accumulate(processor.stereoCorrelationConvolution.begin(), processor.stereoCorrelationConvolution.end(), 0.0) / 100.;
     
+    dynamicHeadroomLevel.levelData = averageDynamicRange;
+    dynamicHeadroomLevel.repaint();
+    stereoCorrelationLevel.levelData = averageStereoConvolutionCorrelation;
+    stereoCorrelationLevel.repaint();
+    
     dynamicRangeLabel.setText("Dynamic Range: " + String(averageDynamicRange), dontSendNotification);
-    stereoCorrelationLabel.setText("Correlation: " + String(averageStereoCorrelation), dontSendNotification);
-    stereoCorrelationConvolutionLabel.setText("Convolution Correlation: " + String(averageStereoConvolutionCorrelation), dontSendNotification);
+    stereoCorrelationConvolutionLabel.setText("Stereo Correlation: " + String(averageStereoConvolutionCorrelation), dontSendNotification);
 }
 
 void TestPluginAudioProcessorEditor::reset()

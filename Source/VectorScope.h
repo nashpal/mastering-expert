@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include "JuceHeader.h"
 #include <array>
+
+
+
 class VectorScope  : public Component
 {
 public:
@@ -23,18 +26,18 @@ public:
     void resized();
     
    
-    void setCurrentPointArray(std::array<juce::Point<float> , 100>);
+    void setCurrentPointArray(std::array<juce::Point<float> , numberVectorPoints>);
     
 private:
     
     // An array of 5 arrays of Point arrays!
-    std::array<std::array<juce::Point<float> , 100>, 5> allPoints { { juce::Point<float>(0,0) } };
+    std::array<std::array<juce::Point<float> , numberVectorPoints>, numberVectorBuffers> allPoints { { juce::Point<float>(0,0) } };
     
     // Which points are the lates to display.
     int currentPointsIndex = 0;
     
 //    ScopedPointer<ImageComponent> image;
-    
+    Path logoPath;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VectorScope)
 };

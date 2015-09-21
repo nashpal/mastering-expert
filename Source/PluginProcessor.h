@@ -14,53 +14,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include <array>
 
-const float defaultGain = 1.0f;
 
-class FloatParameter : public AudioProcessorParameter
-{
-public:
-    
-    FloatParameter (float defaultParameterValue, const String& paramName)
-    : defaultValue (defaultParameterValue),
-    value (defaultParameterValue),
-    name (paramName)
-    {
-    }
-    
-    float getValue() const override
-    {
-        return value;
-    }
-    
-    void setValue (float newValue) override
-    {
-        value = newValue;
-    }
-    
-    float getDefaultValue() const override
-    {
-        return defaultValue;
-    }
-    
-    String getName (int maximumStringLength) const override
-    {
-        return name;
-    }
-    
-    String getLabel() const override
-    {
-        return String();
-    }
-    
-    float getValueForText (const String& text) const override
-    {
-        return text.getFloatValue();
-    }
-    
-private:
-    float defaultValue, value;
-    String name;
-};
 
 //==============================================================================
 /**
@@ -125,7 +79,7 @@ public:
     std::array<float, 8> logoFFTBins;
     
     // Points for vector scope.
-    std::array<juce::Point<float>, 100> vectorScopePoints;
+    std::array<juce::Point<float>, numberVectorPoints> vectorScopePoints;
     
     bool headroomBreached = false;
     
@@ -140,13 +94,12 @@ public:
     
     // Hold the dynmaic range for 100 blocks.
     std::array<float, 100>  dynamicRange {};
-    
-    // Hold the stereo correlation for 100 blocks. Using abs and sum of l/r method.
-    std::array<float, 100> stereoCorrelation {};
 
     // Hold the stereo correlation for 100 blocks. Using convolution method.
     std::array<float, 100> stereoCorrelationConvolution {};
-        
+    
+    float leftRMS;
+    float rightRMS;
     
 private:
     

@@ -17,7 +17,9 @@
 //==============================================================================
 // [BEGIN_USER_CODE_SECTION]
 
-// (You can add your own code in this section, and the Introjucer will not overwrite it)
+// Used for vectorscope configuration.
+const int numberVectorPoints = 100;
+const int numberVectorBuffers = 20;
 
 // [END_USER_CODE_SECTION]
 
