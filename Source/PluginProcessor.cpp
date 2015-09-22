@@ -11,6 +11,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include <complex>
+#include <iostream>
+#include <fstream>
 
 //==============================================================================
 TestPluginAudioProcessor::TestPluginAudioProcessor()
@@ -225,8 +227,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             }
            
             float frameSum = leftChannelData[i] + rightChannelData[i];
-            float absFrameSum = std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]);
-            blockAbsFrameSum += absFrameSum;
+            blockAbsFrameSum += (std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]));
             
             // ************ Mono playback! ************
             if (mono)
@@ -258,6 +259,15 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // Calculate average abs sample value for this block
     float blockAverage = (blockAbsFrameSum / 2) / static_cast<float>(numSamples);
     
+    // Again, see Proakis.
+    if (leftEnergy == 0 || rightEnergy == 0)
+    {
+        stereoCorrelation = 0;
+    } else
+    {
+        stereoCorrelation = Rxy0/(sqrtf(leftEnergy * rightEnergy));
+    }
+    
     if (dynamicRangeCounter < 100)
     {
         // Use this value to get dB, i.e. 20log(blockMax/blockAverage).
@@ -270,17 +280,10 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             blockMax = 0.001;
         }
         
-//        float val = 20 * log10f(blockMax / blockAverage);
+        float val = 20 * log10f(blockMax / blockAverage);
         dynamicRange[dynamicRangeCounter] = blockMax / blockAverage;
         
-        // Again, see Proakis.
-        if (leftEnergy == 0 || rightEnergy == 0)
-        {
-            stereoCorrelationConvolution[dynamicRangeCounter] = 0;
-        } else
-        {
-            stereoCorrelationConvolution[dynamicRangeCounter] = Rxy0/(sqrtf(leftEnergy * rightEnergy));
-        }
+        std::cout << blockMax << " " <<  blockAverage << std::endl;
         
     } else
     {

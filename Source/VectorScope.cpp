@@ -125,7 +125,7 @@ VectorScope::VectorScope ()
 {
     
     logoPath.loadPathFromData (pathData, sizeof (pathData));
-    setSize (277, 394);
+//    setSize (277, 394);
     
 }
 
@@ -153,10 +153,12 @@ void VectorScope::paint (Graphics& g)
                 .getTransformToFit (logoPath.getBounds(),
                                     getLocalBounds().toFloat()));
     
-    g.addTransform(AffineTransform::rotation(-M_PI / 4, 200 + xOffset, 200 + yOffset));
+    float x = getBounds().getWidth() / 2.;
+    g.addTransform(AffineTransform::rotation(-M_PI / 4, x + xOffset, x + yOffset));
 
-    path.addLineSegment(Line<float> (200 + xOffset, 0 + yOffset, 200 + xOffset, 200 + yOffset), 1.);
-    path.addLineSegment(Line<float> (100 + xOffset, 100 + yOffset, 300 + xOffset, 100 + yOffset), 1.);
+    
+    path.addLineSegment(Line<float> (x + xOffset, 0 + yOffset, x + xOffset, x + yOffset), 1.);
+    path.addLineSegment(Line<float> (x / 2. + xOffset, x / 2. + yOffset, 3 * x / 2. + xOffset, x / 2. + yOffset), 1.);
     
     g.setColour (Colours::black);
     g.fillPath (path);
@@ -182,7 +184,7 @@ void VectorScope::paint (Graphics& g)
         
         for (auto& point : points)
         {
-            g.setPixel(200 + xOffset + point.x * 100, 100 + yOffset - point.y * 100 );
+            g.setPixel(x + xOffset + point.x * 100, x / 2. + yOffset - point.y * 100 );
 //            vectorScopePath.addEllipse(200 + point.x * 100, 200 - point.y * 100, 5, 5);
         }
         count++;

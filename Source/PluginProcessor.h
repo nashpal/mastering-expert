@@ -95,8 +95,8 @@ public:
     // Hold the dynmaic range for 100 blocks.
     std::array<float, 100>  dynamicRange {};
 
-    // Hold the stereo correlation for 100 blocks. Using convolution method.
-    std::array<float, 100> stereoCorrelationConvolution {};
+    // Hold the stereo correlation. Using convolution method.
+    float stereoCorrelation;
     
     float leftRMS;
     float rightRMS;

@@ -28,6 +28,7 @@ public:
     int overBar;
     Colour overColour;
     Colour underColour;
+    Colour barColour;
     
     // How many bars to display
     int barCount;

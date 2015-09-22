@@ -49,7 +49,7 @@ private:
     
     Label headroomBreachedLabel;
     Label dynamicRangeLabel;
-    Label stereoCorrelationConvolutionLabel;
+    Label stereoCorrelationLabel;
     
     TextButton resetButton;
     TextButton monoButton;

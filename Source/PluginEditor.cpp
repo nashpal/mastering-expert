@@ -17,7 +17,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     :   AudioProcessorEditor (p),
         headroomBreachedLabel("", "Headroom: OK"),
         dynamicRangeLabel("", "Dynamic Range: 0dB"),
-        stereoCorrelationConvolutionLabel("", "Stereo Correlation: 0"),
+        stereoCorrelationLabel("", "Stereo Correlation: 0"),
         resetButton("Reset"),
         monoButton("Mono")
 {
@@ -37,8 +37,8 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addAndMakeVisible(dynamicRangeLabel);
     dynamicRangeLabel.setFont (Font (15.0f));
     
-    addAndMakeVisible(stereoCorrelationConvolutionLabel);
-    stereoCorrelationConvolutionLabel.setFont(Font(15.0f));
+    addAndMakeVisible(stereoCorrelationLabel);
+    stereoCorrelationLabel.setFont(Font(15.0f));
     
     
     leftLevel.barCount = 20;
@@ -48,6 +48,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     leftLevel.step = 2;
     leftLevel.overColour = Colours::red;
     leftLevel.underColour = Colours::green;
+    leftLevel.barColour = Colours::grey;
     addAndMakeVisible(leftLevel);
     
     rightLevel.barCount = 20;
@@ -57,24 +58,27 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     rightLevel.step = 2;
     rightLevel.overColour = Colours::red;
     rightLevel.underColour = Colours::green;
+    rightLevel.barColour = Colours::grey;
     addAndMakeVisible(rightLevel);
     
     dynamicHeadroomLevel.barCount = 20;
     dynamicHeadroomLevel.minValue = 0;
-    dynamicHeadroomLevel.maxValue = 1;
-    dynamicHeadroomLevel.overBar = 11;
+    dynamicHeadroomLevel.maxValue = 20;
+    dynamicHeadroomLevel.overBar = 6;
     dynamicHeadroomLevel.step = 2;
-    dynamicHeadroomLevel.overColour = Colours::red;
-    dynamicHeadroomLevel.underColour = Colours::green;
+    dynamicHeadroomLevel.overColour = Colours::green; 
+    dynamicHeadroomLevel.underColour = Colours::red;
+    dynamicHeadroomLevel.barColour = Colours::grey;
     addAndMakeVisible(dynamicHeadroomLevel);
     
     stereoCorrelationLevel.barCount = 20;
-    stereoCorrelationLevel.minValue = -1;
-    stereoCorrelationLevel.maxValue = 1;
+    stereoCorrelationLevel.minValue = 0;
+    stereoCorrelationLevel.maxValue = 2;
     stereoCorrelationLevel.overBar = 6;
     stereoCorrelationLevel.step = 2;
     stereoCorrelationLevel.overColour = Colours::green;
     stereoCorrelationLevel.underColour = Colours::red;
+    stereoCorrelationLevel.barColour = Colours::grey;
     addAndMakeVisible(stereoCorrelationLevel);
     
     // Make sure that before the constructor has finished, you've set the
@@ -107,16 +111,16 @@ void TestPluginAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     logo.setBounds(0, 0, 540, 200);
-    vectorScope.setBounds(550, 0, 277, 394);
+    vectorScope.setBounds(550, 0, 192, 286);
     
     headroomBreachedLabel.setBounds(5, 350, 200, 40);
-    leftLevel.setBounds(5, 255, 16, 100);
-    rightLevel.setBounds(23, 255, 16, 100);
+    leftLevel.setBounds(5, 250, 16, 100);
+    rightLevel.setBounds(23, 250, 16, 100);
     
     dynamicRangeLabel.setBounds(205, 350, 200, 40);
     dynamicHeadroomLevel.setBounds(205, 250, 16, 100);
     
-    stereoCorrelationConvolutionLabel.setBounds(405, 350, 200, 40);
+    stereoCorrelationLabel.setBounds(405, 350, 200, 40);
     stereoCorrelationLevel.setBounds(405, 250, 16, 100);
     
     resetButton.setBounds(5, 210, 50, 20);
@@ -164,13 +168,17 @@ void TestPluginAudioProcessorEditor::timerCallback()
         if (processor.headroomBreached)
         {
             headroomBreachedLabel.setText("Headroom: Breached", dontSendNotification);
-        } else
-        {
-            headroomBreachedLabel.setText("Headroom: OK", dontSendNotification);
         }
+//        else
+//        {
+//            headroomBreachedLabel.setText("Headroom: OK", dontSendNotification);
+//        }
+        
+        stereoCorrelationLevel.levelData = processor.stereoCorrelation + 1;
+        stereoCorrelationLevel.repaint();
+        stereoCorrelationLabel.setText("Stereo Correlation: " + String(processor.stereoCorrelation), dontSendNotification);
         
         vectorScope.setCurrentPointArray(processor.vectorScopePoints);
-        
         vectorScope.repaint();
         
     } else
@@ -200,16 +208,12 @@ void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcas
     // Get the average of the dynamicRange, note this is still being changed by the audio thread,
     // but this is only a heuristic method anyway.
     float averageDynamicRange = std::accumulate(processor.dynamicRange.begin(), processor.dynamicRange.end(), 0.0) / 100.;
-    
-    float averageStereoConvolutionCorrelation = std::accumulate(processor.stereoCorrelationConvolution.begin(), processor.stereoCorrelationConvolution.end(), 0.0) / 100.;
-    
-    dynamicHeadroomLevel.levelData = averageDynamicRange;
+
+    dynamicHeadroomLevel.levelData = 20 * log10f(averageDynamicRange);
     dynamicHeadroomLevel.repaint();
-    stereoCorrelationLevel.levelData = averageStereoConvolutionCorrelation;
-    stereoCorrelationLevel.repaint();
+
+    dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(averageDynamicRange)), dontSendNotification);
     
-    dynamicRangeLabel.setText("Dynamic Range: " + String(averageDynamicRange), dontSendNotification);
-    stereoCorrelationConvolutionLabel.setText("Stereo Correlation: " + String(averageStereoConvolutionCorrelation), dontSendNotification);
 }
 
 void TestPluginAudioProcessorEditor::reset()
@@ -217,4 +221,6 @@ void TestPluginAudioProcessorEditor::reset()
     TestPluginAudioProcessor& processor = getProcessor();
     
     processor.headroomBreached = false;
+    
+    headroomBreachedLabel.setText("Headroom: OK", dontSendNotification);
 }

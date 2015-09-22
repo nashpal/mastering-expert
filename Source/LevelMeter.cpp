@@ -36,17 +36,27 @@ void LevelMeter::paint (Graphics& g)
     
     int currentBarCount = levelData / (maxValue - minValue) * barCount;
     
-    for (int y = yOffset; y > yOffset - currentBarCount * (step + barHeight); y -= (step + barHeight)) {
+    int x, y;
+    
+    x = xOffset;
+    y = yOffset;
+    
+    for (int count = 1; count <= barCount; count++) {
         
-        if (currentBarCount > overBar) {
-            g.setColour (overColour);
+        if (count <= currentBarCount)
+        {
+            if (count < overBar)
+                g.setColour (underColour);
+            else
+                g.setColour (overColour);
         } else
         {
-            g.setColour (underColour);
+            g.setColour (barColour);
         }
+        g.drawLine(x, y, x+barWidth, y, barHeight);
+//        wavePath.addLineSegment (Line<float> (x, y, x + barWidth, y), barHeight);
         
-        wavePath.addLineSegment (Line<float> (xOffset, y, xOffset + barWidth, y), barHeight);
-        
+        y -= (step + barHeight);
     }
 
     g.fillPath (wavePath);
