@@ -183,7 +183,6 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     // Hold the block's max sample value from left or right.
     float blockMax = 0;
-
     
     if (getNumInputChannels() == 2 && getNumOutputChannels() == 2)
     {
@@ -225,7 +224,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             {
                 blockMax = std::abs(rightChannelData[i]);
             }
-           
+            
             float frameSum = leftChannelData[i] + rightChannelData[i];
             blockAbsFrameSum += (std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]));
             
@@ -257,7 +256,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     rightRMS = sqrtf(rightEnergy / numSamples);
     
     // Calculate average abs sample value for this block
-    float blockAverage = (blockAbsFrameSum / 2) / static_cast<float>(numSamples);
+    float blockAverageRMS = (leftRMS + rightRMS) / 2;
     
     // Again, see Proakis.
     if (leftEnergy == 0 || rightEnergy == 0)
@@ -271,19 +270,18 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     if (dynamicRangeCounter < 100)
     {
         // Use this value to get dB, i.e. 20log(blockMax/blockAverage).
-        if (blockAverage == 0)
+        if (blockAverageRMS == 0)
         {
-            blockAverage = 0.001;
+            blockAverageRMS = 0.001;
         }
         if (blockMax == 0)
         {
             blockMax = 0.001;
         }
-        
-        float val = 20 * log10f(blockMax / blockAverage);
-        dynamicRange[dynamicRangeCounter] = blockMax / blockAverage;
-        
-        std::cout << blockMax << " " <<  blockAverage << std::endl;
+
+        dynamicRangeMax[dynamicRangeCounter] = blockMax;
+        dynamicRangeAvg[dynamicRangeCounter] = blockAverageRMS;
+//        std::cout << blockMax << " " <<  blockAverage << " " << std::endl;
         
     } else
     {

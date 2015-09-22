@@ -1857,12 +1857,12 @@
 		85912661F3712D537904699E /* MasteringExpert */ = {
 			isa = PBXGroup;
 			children = (
-				CA100EA4555649108989CF67 /* EmbeddedImage.cpp */,
 				52D73A36532C020D710E313C /* EmbeddedImage.h */,
-				C6EE96B81BAC6DFF00D7FA29 /* VectorScope.cpp */,
+				CA100EA4555649108989CF67 /* EmbeddedImage.cpp */,
 				C6EE96B91BAC6DFF00D7FA29 /* VectorScope.h */,
-				C6EE96BC1BB0681F00D7FA29 /* LevelMeter.cpp */,
+				C6EE96B81BAC6DFF00D7FA29 /* VectorScope.cpp */,
 				C6EE96BD1BB0681F00D7FA29 /* LevelMeter.h */,
+				C6EE96BC1BB0681F00D7FA29 /* LevelMeter.cpp */,
 				D5E4FCB03D6DC4DEA0E72972 /* Source */,
 			);
 			name = MasteringExpert;

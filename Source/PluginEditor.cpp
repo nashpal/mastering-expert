@@ -207,12 +207,13 @@ void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcas
     
     // Get the average of the dynamicRange, note this is still being changed by the audio thread,
     // but this is only a heuristic method anyway.
-    float averageDynamicRange = std::accumulate(processor.dynamicRange.begin(), processor.dynamicRange.end(), 0.0) / 100.;
-
-    dynamicHeadroomLevel.levelData = 20 * log10f(averageDynamicRange);
+    float averageDynamicRange = std::accumulate(processor.dynamicRangeAvg.begin(), processor.dynamicRangeAvg.end(), 0.0) / 100;
+    float maxDynamicRange = *std::max_element(processor.dynamicRangeMax.begin(), processor.dynamicRangeMax.end());
+    
+    dynamicHeadroomLevel.levelData = 20 * log10f(maxDynamicRange / averageDynamicRange);
     dynamicHeadroomLevel.repaint();
 
-    dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(averageDynamicRange)), dontSendNotification);
+    dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange)), dontSendNotification);
     
 }
 

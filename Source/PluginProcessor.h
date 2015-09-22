@@ -92,9 +92,10 @@ public:
     // How many dynmaic range measurements have we taken.
     int dynamicRangeCounter = 0;
     
-    // Hold the dynmaic range for 100 blocks.
-    std::array<float, 100>  dynamicRange {};
-
+    // Hold the dynmaic range for 1000 blocks.
+    std::array<float, 100>  dynamicRangeMax {};
+    std::array<float, 100>  dynamicRangeAvg {};
+        
     // Hold the stereo correlation. Using convolution method.
     float stereoCorrelation;
     
