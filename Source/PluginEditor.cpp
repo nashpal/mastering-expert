@@ -19,12 +19,20 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
         dynamicRangeLabel("", "Dynamic Range: 0dB"),
         stereoCorrelationLabel("", "Stereo Correlation: 0"),
         resetButton("Reset"),
-        monoButton("Mono")
+        monoButton("Mono"),
+        leftLevel("","",""),
+        rightLevel("-inf", "-6dB", "0db"),
+        dynamicHeadroomLevel("0db", "10dB", "20db"),
+        stereoCorrelationLevel("-1", "0", "+1"),
+        bassSpaceLabel("", "Bass Space: soon!"),
+        hyperLink("Get it mastered at Mastering The Mix", URL ("http://www.masteringthemix.com"))
+
 {
     
     addAndMakeVisible(&logo);
     addAndMakeVisible(vectorScope);
     
+    headroomBreachedLabel.setJustificationType(juce::Justification::left);
     addAndMakeVisible(headroomBreachedLabel);
     headroomBreachedLabel.setFont (Font (15.0f));
     
@@ -34,56 +42,73 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addAndMakeVisible(monoButton);
     monoButton.addListener(this);
     
+    dynamicRangeLabel.setJustificationType(juce::Justification::left);
     addAndMakeVisible(dynamicRangeLabel);
     dynamicRangeLabel.setFont (Font (15.0f));
     
+    stereoCorrelationLabel.setJustificationType(juce::Justification::left);
     addAndMakeVisible(stereoCorrelationLabel);
     stereoCorrelationLabel.setFont(Font(15.0f));
-    
+
+    bassSpaceLabel.setJustificationType(juce::Justification::left);
+    addAndMakeVisible(bassSpaceLabel);
+    bassSpaceLabel.setFont(Font(15.0f));
+
+    addAndMakeVisible(hyperLink);
+    hyperLink.setTooltip(String("www.masteringthemix.com"));
+    hyperLink.setFont(Font(15.0f), false, juce::Justification::left);
     
     leftLevel.barCount = 20;
+    leftLevel.barWidth = 16;
     leftLevel.minValue = 0;
     leftLevel.maxValue = 1;
     leftLevel.overBar = 11;
     leftLevel.step = 2;
     leftLevel.overColour = Colours::red;
     leftLevel.underColour = Colours::green;
-    leftLevel.barColour = Colours::grey;
+    leftLevel.barColour = Colours::black;
+    leftLevel.meterType = MeterType::NORMAL;
     addAndMakeVisible(leftLevel);
     
     rightLevel.barCount = 20;
+    rightLevel.barWidth = 16;
     rightLevel.minValue = 0;
     rightLevel.maxValue = 1;
     rightLevel.overBar = 11;
     rightLevel.step = 2;
     rightLevel.overColour = Colours::red;
     rightLevel.underColour = Colours::green;
-    rightLevel.barColour = Colours::grey;
+    rightLevel.barColour = Colours::black;
+    rightLevel.meterType = MeterType::NORMAL;
     addAndMakeVisible(rightLevel);
     
     dynamicHeadroomLevel.barCount = 20;
+    dynamicHeadroomLevel.barWidth = 16;
     dynamicHeadroomLevel.minValue = 0;
     dynamicHeadroomLevel.maxValue = 20;
-    dynamicHeadroomLevel.overBar = 6;
+    dynamicHeadroomLevel.overBar = 11;
     dynamicHeadroomLevel.step = 2;
-    dynamicHeadroomLevel.overColour = Colours::green; 
-    dynamicHeadroomLevel.underColour = Colours::red;
-    dynamicHeadroomLevel.barColour = Colours::grey;
+    dynamicHeadroomLevel.overColour = Colours::red;
+    dynamicHeadroomLevel.underColour = Colours::green;
+    dynamicHeadroomLevel.barColour = Colours::black;
+    dynamicHeadroomLevel.meterType = MeterType::DYNAMICRANGE;
     addAndMakeVisible(dynamicHeadroomLevel);
     
     stereoCorrelationLevel.barCount = 20;
+    stereoCorrelationLevel.barWidth = 16;
     stereoCorrelationLevel.minValue = 0;
     stereoCorrelationLevel.maxValue = 2;
-    stereoCorrelationLevel.overBar = 6;
+    stereoCorrelationLevel.overBar = 10;
     stereoCorrelationLevel.step = 2;
-    stereoCorrelationLevel.overColour = Colours::green;
-    stereoCorrelationLevel.underColour = Colours::red;
-    stereoCorrelationLevel.barColour = Colours::grey;
+    stereoCorrelationLevel.overColour = Colours::red;
+    stereoCorrelationLevel.underColour = Colours::green;
+    stereoCorrelationLevel.barColour = Colours::black;
+    stereoCorrelationLevel.meterType = MeterType::CORRRELATION;
     addAndMakeVisible(stereoCorrelationLevel);
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (1040, 410);
+    setSize (745, 410);
     
     getProcessor().addChangeListener(this);
     
@@ -115,17 +140,20 @@ void TestPluginAudioProcessorEditor::resized()
     
     headroomBreachedLabel.setBounds(5, 350, 200, 40);
     leftLevel.setBounds(5, 250, 16, 100);
-    rightLevel.setBounds(23, 250, 16, 100);
+    rightLevel.setBounds(23, 250, 50, 100);
     
     dynamicRangeLabel.setBounds(205, 350, 200, 40);
-    dynamicHeadroomLevel.setBounds(205, 250, 16, 100);
+    dynamicHeadroomLevel.setBounds(205, 250, 50, 100);
     
     stereoCorrelationLabel.setBounds(405, 350, 200, 40);
-    stereoCorrelationLevel.setBounds(405, 250, 16, 100);
+    stereoCorrelationLevel.setBounds(405, 250, 50, 100);
+    
+    bassSpaceLabel.setBounds(605, 350, 200, 40);
     
     resetButton.setBounds(5, 210, 50, 20);
     monoButton.setBounds(60, 210, 50, 20);
     
+    hyperLink.setBounds(0, 380, 300, 40);
 }
 
 
@@ -176,7 +204,7 @@ void TestPluginAudioProcessorEditor::timerCallback()
         
         stereoCorrelationLevel.levelData = processor.stereoCorrelation + 1;
         stereoCorrelationLevel.repaint();
-        stereoCorrelationLabel.setText("Stereo Correlation: " + String(processor.stereoCorrelation), dontSendNotification);
+        stereoCorrelationLabel.setText("Stereo Correlation: " + String(processor.stereoCorrelation, 2), dontSendNotification);
         
         vectorScope.setCurrentPointArray(processor.vectorScopePoints);
         vectorScope.repaint();
@@ -213,7 +241,7 @@ void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcas
     dynamicHeadroomLevel.levelData = 20 * log10f(maxDynamicRange / averageDynamicRange);
     dynamicHeadroomLevel.repaint();
 
-    dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange)), dontSendNotification);
+    dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange), 2) + "dB", dontSendNotification);
     
 }
 

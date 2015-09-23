@@ -142,8 +142,8 @@ void VectorScope::paint (Graphics& g)
     
     Path path;
     
-    float xOffset = 8.f;
-    float yOffset = 30.f;
+    float xOffset = 15.f;
+    float yOffset = 38.f;
    
     Rectangle<float> rect = logoPath.getBounds();
     Rectangle<int> rect2 = getLocalBounds();
@@ -153,12 +153,15 @@ void VectorScope::paint (Graphics& g)
                 .getTransformToFit (logoPath.getBounds(),
                                     getLocalBounds().toFloat()));
     
-    float x = getBounds().getWidth() / 2.;
-    g.addTransform(AffineTransform::rotation(-M_PI / 4, x + xOffset, x + yOffset));
+    float lineLength = 160;
+    g.addTransform(AffineTransform::rotation(-M_PI / 4, lineLength / 2. + xOffset, lineLength / 2. + yOffset));
 
     
-    path.addLineSegment(Line<float> (x + xOffset, 0 + yOffset, x + xOffset, x + yOffset), 1.);
-    path.addLineSegment(Line<float> (x / 2. + xOffset, x / 2. + yOffset, 3 * x / 2. + xOffset, x / 2. + yOffset), 1.);
+    // Vertical line
+    path.addLineSegment(Line<float> (lineLength / 2. + xOffset, 0 + yOffset, lineLength / 2. + xOffset, lineLength + yOffset), 1.);
+    
+    // Horizontal line
+    path.addLineSegment(Line<float> (xOffset, lineLength / 2. + yOffset, lineLength + xOffset, lineLength / 2.  + yOffset), 1.);
     
     g.setColour (Colours::black);
     g.fillPath (path);
@@ -184,7 +187,9 @@ void VectorScope::paint (Graphics& g)
         
         for (auto& point : points)
         {
-            g.setPixel(x + xOffset + point.x * 100, x / 2. + yOffset - point.y * 100 );
+            float temp = point.x;
+            jassert(temp < 1.5);
+            g.setPixel(lineLength / 2. + xOffset + point.x * lineLength / 4., lineLength / 2. + yOffset - point.y * lineLength / 4. );
 //            vectorScopePath.addEllipse(200 + point.x * 100, 200 - point.y * 100, 5, 5);
         }
         count++;

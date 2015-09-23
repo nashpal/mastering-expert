@@ -8,11 +8,24 @@
 
 #include "LevelMeter.h"
 
-LevelMeter::LevelMeter ()
+LevelMeter::LevelMeter (String bottomLabelText, String midLabelText, String topLabelText)
 {
     
-//    setSize (277, 394);
+
+    bottomLabel.setJustificationType(juce::Justification::left);
+    bottomLabel.setText(bottomLabelText, dontSendNotification);
+    addAndMakeVisible(bottomLabel);
+    bottomLabel.setFont (Font (10.0f));
     
+    midLabel.setJustificationType(juce::Justification::left);
+    midLabel.setText(midLabelText, dontSendNotification);
+    addAndMakeVisible(midLabel);
+    midLabel.setFont (Font (10.0f));
+    
+    topLabel.setJustificationType(juce::Justification::left);
+    topLabel.setText(topLabelText, dontSendNotification);
+    addAndMakeVisible(topLabel);
+    topLabel.setFont (Font (10.0f));
 }
 
 LevelMeter::~LevelMeter()
@@ -30,7 +43,6 @@ void LevelMeter::paint (Graphics& g)
     Path wavePath;
     
     int barHeight = (getBounds().getHeight() - ((barCount - 1) * step)) / barCount;
-    int barWidth = getBounds().getWidth();
     int xOffset = 0;
     int yOffset = getBounds().getHeight();
     
@@ -41,22 +53,81 @@ void LevelMeter::paint (Graphics& g)
     x = xOffset;
     y = yOffset;
     
-    for (int count = 1; count <= barCount; count++) {
+    
+    if (meterType == MeterType::CORRRELATION)
+    {
+        // Draw background bars.
+        g.setColour (barColour);
         
-        if (count <= currentBarCount)
+        for (int count = 1; count <= barCount; count++)
         {
-            if (count < overBar)
-                g.setColour (underColour);
-            else
-                g.setColour (overColour);
-        } else
-        {
-            g.setColour (barColour);
+            g.drawLine(x, y, x+barWidth, y, barHeight);
+            y -= (step + barHeight);
         }
-        g.drawLine(x, y, x+barWidth, y, barHeight);
-//        wavePath.addLineSegment (Line<float> (x, y, x + barWidth, y), barHeight);
         
-        y -= (step + barHeight);
+        y = yOffset - currentBarCount * (step + barHeight);
+        
+        // Now draw the correlation bar.
+        if (currentBarCount >= overBar)
+        {
+            g.setColour (underColour);
+        }
+        else
+        {
+            g.setColour (overColour);
+        }
+        
+        g.drawLine(x, y, x+barWidth, y, barHeight);
+    }
+    else
+    {
+    
+        for (int count = 1; count <= barCount; count++)
+        {
+            
+            switch (meterType) {
+                    
+                case MeterType::NORMAL:
+                    if (count <= currentBarCount)
+                    {
+                        if (count < overBar)
+                            g.setColour (underColour);
+                        else
+                            g.setColour (overColour);
+                    } else
+                    {
+                        g.setColour (barColour);
+                    }
+
+                    break;
+                    
+                case MeterType::DYNAMICRANGE:
+                    
+                    if (count <= currentBarCount)
+                    {
+                        // If level is over then set all bars to over colour
+                        if (currentBarCount >= overBar)
+                        {
+                            g.setColour(underColour);
+                        } else{
+                            g.setColour(overColour);
+                        }
+                    } else
+                    {
+                        g.setColour (barColour);
+                    }
+                    
+                    break;
+                    
+                default:
+                    break;
+            }
+                   
+            g.drawLine(x, y, x+barWidth, y, barHeight);
+            
+            y -= (step + barHeight);
+        }
+        
     }
 
     g.fillPath (wavePath);
@@ -65,11 +136,8 @@ void LevelMeter::paint (Graphics& g)
 
 void LevelMeter::resized()
 {
-    //[UserPreResize] Add your own custom resize code here..
-    //[/UserPreResize]
-    
-    //    image->setBounds (0, 50, 450, 159);
-    //[UserResized] Add your own custom resize handling here..
-    //[/UserResized]
+    bottomLabel.setBounds(barWidth + 4, getBounds().getHeight() - 15, 30, 20);
+    midLabel.setBounds(barWidth + 4, getBounds().getHeight() / 2. - 10, 30, 20);
+    topLabel.setBounds(barWidth + 4, 0, 30, 20);
 }
 

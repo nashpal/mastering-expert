@@ -50,6 +50,7 @@ private:
     Label headroomBreachedLabel;
     Label dynamicRangeLabel;
     Label stereoCorrelationLabel;
+    Label bassSpaceLabel;
     
     TextButton resetButton;
     TextButton monoButton;
@@ -58,6 +59,8 @@ private:
     LevelMeter rightLevel;
     LevelMeter dynamicHeadroomLevel;
     LevelMeter stereoCorrelationLevel;
+    
+    HyperlinkButton hyperLink;
     
     // Need to fade out vector scope if play has stopped.
     int vectosScopeFadeoutCount = 0;

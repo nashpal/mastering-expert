@@ -12,13 +12,18 @@
 #include <stdio.h>
 #include "JuceHeader.h"
 
-
+enum class MeterType
+{
+    NORMAL,
+    DYNAMICRANGE,
+    CORRRELATION
+};
 
 class LevelMeter  : public Component
 {
 public:
     
-    LevelMeter ();
+    LevelMeter (String bottomLabelText, String midLabelText, String topLabelText);
     ~LevelMeter();
     
     void paint (Graphics& g);
@@ -41,9 +46,17 @@ public:
     float maxValue;
     float minValue;
     
+    float barWidth;
+    
+    MeterType meterType;
+
+    Label bottomLabel;
+    Label midLabel;
+    Label topLabel;
+    
 private:
     
-    float scale;
+    
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LevelMeter)
 };
