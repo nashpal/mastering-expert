@@ -92,7 +92,7 @@ public:
     // How many dynmaic range measurements have we taken.
     int dynamicRangeCounter = 0;
     
-    // Hold the dynmaic range for 1000 blocks.
+    // Hold the dynmaic range for 100 blocks.
     std::array<float, 100>  dynamicRangeMax {};
     std::array<float, 100>  dynamicRangeAvg {};
         
@@ -101,7 +101,16 @@ public:
     
     float leftRMS;
     float rightRMS;
+        
+    float blockSize;
+
+    // 4 frequencies for bass space, get average of 100 blocks.
+    float binFrequencies[4];
+    std::array<std::array<float, 100>, 4> binAmplitudes;
     
+    // Used to get average RMS to 'normalise' the bass space db readings.
+    std::array<float, 100> leftRMSFilteredAverage;
+        
 private:
     
     // Used for logo
@@ -113,6 +122,21 @@ private:
     
     // Used to hold result of multilying l and r for correlation.
     float* multipliedFFT;
+        
+        
+    // Limkwitz-Riley HPF coeffs.
+    float a_0;
+    float a_1;
+    float a_2;
+    float b_1;
+    float b_2;
+    float x_1 = 0;
+    float x_2 = 0;
+    float y_1 = 0;
+    float y_2 = 0;
+    
+    float leftRMSFiltered;
+        
         
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TestPluginAudioProcessor)

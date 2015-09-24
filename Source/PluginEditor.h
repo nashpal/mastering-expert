@@ -60,6 +60,13 @@ private:
     LevelMeter dynamicHeadroomLevel;
     LevelMeter stereoCorrelationLevel;
     
+    Label freq1Label;
+    Label freq2Label;
+    Label freq3Label;
+    Label freq4Label;
+    
+    Label blockSizeLabel;
+    
     HyperlinkButton hyperLink;
     
     // Need to fade out vector scope if play has stopped.

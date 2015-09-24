@@ -106,6 +106,26 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     stereoCorrelationLevel.meterType = MeterType::CORRRELATION;
     addAndMakeVisible(stereoCorrelationLevel);
     
+    freq1Label.setJustificationType(juce::Justification::left);
+    addAndMakeVisible(freq1Label);
+    freq1Label.setFont(Font(10.0f));
+    
+    freq2Label.setJustificationType(juce::Justification::left);
+    addAndMakeVisible(freq2Label);
+    freq2Label.setFont(Font(10.0f));
+    
+    freq3Label.setJustificationType(juce::Justification::left);
+    addAndMakeVisible(freq3Label);
+    freq3Label.setFont(Font(10.0f));
+    
+    freq4Label.setJustificationType(juce::Justification::left);
+    addAndMakeVisible(freq4Label);
+    freq4Label.setFont(Font(10.0f));
+    
+    blockSizeLabel.setJustificationType(juce::Justification::left);
+    addAndMakeVisible(blockSizeLabel);
+    blockSizeLabel.setFont(Font(10.0f));
+    
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (745, 410);
@@ -149,6 +169,12 @@ void TestPluginAudioProcessorEditor::resized()
     stereoCorrelationLevel.setBounds(405, 250, 50, 100);
     
     bassSpaceLabel.setBounds(605, 350, 200, 40);
+    
+    freq1Label.setBounds(605, 230, 100, 25);
+    freq2Label.setBounds(605, 260, 100, 25);
+    freq3Label.setBounds(605, 290, 100, 25);
+    freq4Label.setBounds(605, 320, 100, 25);
+    blockSizeLabel.setBounds(605, 200, 100, 25);
     
     resetButton.setBounds(5, 210, 50, 20);
     monoButton.setBounds(60, 210, 50, 20);
@@ -209,6 +235,7 @@ void TestPluginAudioProcessorEditor::timerCallback()
         vectorScope.setCurrentPointArray(processor.vectorScopePoints);
         vectorScope.repaint();
         
+        
     } else
     {
         
@@ -242,6 +269,22 @@ void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcas
     dynamicHeadroomLevel.repaint();
 
     dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange), 2) + "dB", dontSendNotification);
+    
+    float averageFilteredRMSdB = 20 * log10f(std::accumulate(processor.leftRMSFilteredAverage.begin(), processor.leftRMSFilteredAverage.end(), 0.0) / 100);
+    float averageBinLeveldB = std::accumulate(processor.binAmplitudes[0].begin(), processor.binAmplitudes[0].end(), 0.0) / 100;
+    freq1Label.setText("Freq: " + String(processor.binFrequencies[0]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB) , dontSendNotification);
+    
+    averageBinLeveldB = std::accumulate(processor.binAmplitudes[1].begin(), processor.binAmplitudes[1].end(), 0.0) / 100;
+    freq2Label.setText("Freq: " + String(processor.binFrequencies[1]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+    
+    averageBinLeveldB = std::accumulate(processor.binAmplitudes[2].begin(), processor.binAmplitudes[2].end(), 0.0) / 100;
+    freq3Label.setText("Freq: " + String(processor.binFrequencies[2]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+    
+    averageBinLeveldB = std::accumulate(processor.binAmplitudes[3].begin(), processor.binAmplitudes[3].end(), 0.0) / 100;
+    freq4Label.setText("Freq: " + String(processor.binFrequencies[3]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+    
+    blockSizeLabel.setText("Blocksize: " + String(processor.blockSize), dontSendNotification);
+
     
 }
 

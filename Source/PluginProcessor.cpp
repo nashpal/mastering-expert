@@ -114,6 +114,36 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     forwardLeftFFTData = new float[2 * samplesPerBlock]; // To hold real and Complex
     forwardRightFFTData = new float[2 * samplesPerBlock]; // To hold real and Complex
     multipliedFFT = new float[2 * samplesPerBlock];
+    
+    // Report to UI what the block size is.
+    blockSize = samplesPerBlock;
+    
+    // Get bass space frequencies.
+    float fundamental = (float)sampleRate / (float)samplesPerBlock;
+    
+    for (int i = 0; i < 4; i++) {
+        
+        // Get the frequency at this bin.
+        binFrequencies[i] = (i+1) * fundamental;
+        
+    }
+    
+    // We are going to use a Linkwitz-Riley HPF to calculate a rough idea of of a track's level without bass.
+    // We need this to 'normalise' the bass space dB levels.
+    
+    // From Designing Audio FX PLug-ins, Pirkle p. 186
+    float f_c = 1000; // Filter cut-off 500 Hz
+    float theta_c = M_PI * f_c / sampleRate;
+    float omega_c = M_PI * f_c;
+    float kappa = omega_c / tanf(theta_c);
+    float delta = kappa * kappa + omega_c * omega_c + 2 * kappa * omega_c;
+    a_0 = (kappa * kappa) / delta;
+    a_1 = (-2 * kappa * kappa) / delta;
+    a_2 = a_0;
+    b_1 = (-2 * kappa * kappa + 2 * omega_c * omega_c) / delta;
+    b_2 = (-2 * kappa * omega_c + kappa * kappa + omega_c * omega_c) / delta;
+    
+    
 }
 
 void TestPluginAudioProcessor::releaseResources()
@@ -161,20 +191,23 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData);
     forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData);
     
-    // TODO: Use better bins or aaverage across bins.
+    // TODO: Use better bins or average across bins.
     // Maybe don't need this every call.
     // We've only got 8 bars in the logo. Get bins at 1,2,4,8, ...
     for (int i = 0, j = 1; i < 8; i++, j*=2)
     {
         std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[j].r, ((FFT::Complex*)forwardLeftFFTData)[j].i);
-        logoFFTBins[i] = int(std::abs(val)); // Get magnitude
+        logoFFTBins[i] = int(std::abs(val)); // Get magnitude, this is just for display effect so just use 'raw' value.
     }
-    
+
     // Effectively Rxx(0) is the energy in left channel. See Cross correlation comments below.
     float leftEnergy = 0;
     
     // Effectively Ryy(0) is the energy in right channel.
     float rightEnergy = 0;
+    
+    // Get the energy in the left channel after filtering.
+    float leftEnergyFiltered = 0;
     
     float Rxy0 = 0;
     
@@ -244,7 +277,26 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(leftChannelData[i], rightChannelData[i]);
             }
             
-//            channelData[i] *= gain->getValue();
+            // ************ Bass space ************
+            
+            // Apply Linkwitz-Riley filter
+            
+            if (i <=2)
+            {
+                
+            }
+            
+            // Apply filter to left channel: y(n) = a0 * x(n) + a1 * x(n-1) + a2 * x(n-2) - b1 * y(n-1) - b2 * y(n-2).
+            float leftChannelFiltered = a_0 * leftChannelData[i] + a_1 * x_1 + a_2 * x_2 - b_1 * y_1 - b_2 * y_2;
+            y_2 = y_1;
+            y_1 = leftChannelFiltered;
+            x_2 = x_1;
+            x_1 = leftChannelData[i];
+            
+//            leftChannelData[i] = leftChannelFiltered;
+//            rightChannelData[i] = leftChannelFiltered;
+            
+            leftEnergyFiltered += (leftChannelFiltered * leftChannelFiltered);
         }
     }
     
@@ -254,6 +306,9 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // Calculate RMS
     leftRMS = sqrtf(leftEnergy / numSamples);
     rightRMS = sqrtf(rightEnergy / numSamples);
+    
+    // For the filtered RMS.
+    leftRMSFiltered = sqrtf(leftEnergyFiltered / numSamples);
     
     // Calculate average abs sample value for this block
     float blockAverageRMS = (leftRMS + rightRMS) / 2;
@@ -282,6 +337,18 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         dynamicRangeMax[dynamicRangeCounter] = blockMax;
         dynamicRangeAvg[dynamicRangeCounter] = blockAverageRMS;
 //        std::cout << blockMax << " " <<  blockAverage << " " << std::endl;
+        
+        // For bass space. Get first four bins (after DC).
+        for (int i = 0; i < 4; i++) {
+            
+            // Get the amplitude in dB.
+            std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[i+1].r, ((FFT::Complex*)forwardLeftFFTData)[i+1].i);
+            binAmplitudes[i][dynamicRangeCounter] = 20 * log10(std::abs(val) / (numSamples / 2.)) ;
+            
+        }
+        
+        // Also hold the leftRMSFiltered to use to 'normalise' the bass dB.
+        leftRMSFilteredAverage[dynamicRangeCounter] = leftRMSFiltered;
         
     } else
     {
