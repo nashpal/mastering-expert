@@ -132,7 +132,7 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     // We need this to 'normalise' the bass space dB levels.
     
     // From Designing Audio FX PLug-ins, Pirkle p. 186
-    float f_c = 1000; // Filter cut-off 500 Hz
+    float f_c = 1000; // Filter cut-off 1000 Hz
     float theta_c = M_PI * f_c / sampleRate;
     float omega_c = M_PI * f_c;
     float kappa = omega_c / tanf(theta_c);
