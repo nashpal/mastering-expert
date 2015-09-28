@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2015
+Project("{234B263B-ADC8-F871-1BB4-409B658F1B08}") = "MasteringExpert", "MasteringExpert.vcxproj", "{9125DB3F-D109-3DE4-3B73-447A35082B2E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9125DB3F-D109-3DE4-3B73-447A35082B2E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9125DB3F-D109-3DE4-3B73-447A35082B2E}.Debug|Win32.Build.0 = Debug|Win32
+		{9125DB3F-D109-3DE4-3B73-447A35082B2E}.Release|Win32.ActiveCfg = Release|Win32
+		{9125DB3F-D109-3DE4-3B73-447A35082B2E}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

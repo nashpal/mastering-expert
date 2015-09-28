@@ -17,9 +17,7 @@
 //==============================================================================
 // [BEGIN_USER_CODE_SECTION]
 
-// Used for vectorscope configuration.
-const int numberVectorPoints = 100;
-const int numberVectorBuffers = 20;
+
 
 // [END_USER_CODE_SECTION]
 
@@ -194,7 +192,7 @@ const int numberVectorBuffers = 20;
  #define JucePlugin_Build_VST              0
 #endif
 #ifndef  JucePlugin_Build_VST3
- #define JucePlugin_Build_VST3             0
+ #define JucePlugin_Build_VST3             1
 #endif
 #ifndef  JucePlugin_Build_AU
  #define JucePlugin_Build_AU               1
@@ -233,7 +231,7 @@ const int numberVectorBuffers = 20;
  #define JucePlugin_MaxNumOutputChannels   2
 #endif
 #ifndef  JucePlugin_PreferredChannelConfigurations
- #define JucePlugin_PreferredChannelConfigurations  {2, 2}
+ #define JucePlugin_PreferredChannelConfigurations  {1, 1}, {2, 2}
 #endif
 #ifndef  JucePlugin_IsSynth
  #define JucePlugin_IsSynth                0

@@ -9,10 +9,11 @@
 #ifndef __MasteringExpert__VectorScope__
 #define __MasteringExpert__VectorScope__
 
-#include <stdio.h>
-#include "JuceHeader.h"
-#include <array>
 
+#include "JuceHeader.h"
+#include "Settings.h"
+#include <array>
+#include <stdio.h>
 
 
 class VectorScope  : public Component
