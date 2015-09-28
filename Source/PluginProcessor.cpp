@@ -191,10 +191,11 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     // TODO: Use better bins or average across bins.
     // Maybe don't need this every call.
-    // We've only got 8 bars in the logo. Get bins at 1,2,4,8, ...
-    for (int i = 0, j = 1; i < 8; i++, j*=2)
+    // We've only got 8 bars in the logo. Get bins at 10oHz,200Hz,400Hz, ...
+    for (int i = 0, frequency = 100; i < 8; i++, frequency*=2)
     {
-        std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[j].r, ((FFT::Complex*)forwardLeftFFTData)[j].i);
+        int bin = frequency / (getSampleRate() / numSamples);
+        std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[bin].r, ((FFT::Complex*)forwardLeftFFTData)[bin].i);
         logoFFTBins[i] = int(std::abs(val)); // Get magnitude, this is just for display effect so just use 'raw' value.
     }
 
