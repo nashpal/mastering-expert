@@ -110,7 +110,6 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     // initialisation that you need..
     int fftOrder = log2f(samplesPerBlock);
     forwardFFT = new FFT(fftOrder, false);
-    inverseFFT = new FFT(fftOrder, true);
     forwardLeftFFTData = new float[2 * samplesPerBlock]; // To hold real and Complex
     forwardRightFFTData = new float[2 * samplesPerBlock]; // To hold real and Complex
     multipliedFFT = new float[2 * samplesPerBlock];
@@ -151,7 +150,6 @@ void TestPluginAudioProcessor::releaseResources()
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
     delete forwardFFT;
-    delete inverseFFT;
     delete [] forwardLeftFFTData;
     delete [] forwardRightFFTData;
     delete [] multipliedFFT;

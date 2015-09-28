@@ -116,7 +116,6 @@ private:
     
     // Used for logo
     FFT* forwardFFT;
-    FFT* inverseFFT;
     
     float* forwardLeftFFTData;
     float* forwardRightFFTData;
@@ -135,7 +134,6 @@ private:
     float x_2 = 0;
     float y_1 = 0;
     float y_2 = 0;
-    
     float leftRMSFiltered;
         
         
