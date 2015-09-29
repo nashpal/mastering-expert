@@ -30,6 +30,8 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
 {
     
     addAndMakeVisible(&logo);
+    
+    vectorScope.radius = 75;
     addAndMakeVisible(vectorScope);
     
     headroomBreachedLabel.setJustificationType(juce::Justification::left);
@@ -132,7 +134,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     getProcessor().addChangeListener(this);
     
-    startTimer (50);
+    startTimer (20);
 }
 
 TestPluginAudioProcessorEditor::~TestPluginAudioProcessorEditor()
@@ -214,8 +216,8 @@ void TestPluginAudioProcessorEditor::timerCallback()
         logo.setFFTBins(processor.logoFFTBins);
         logo.repaint();
         
-        leftLevel.levelData = processor.leftRMS;
-        rightLevel.levelData = processor.rightRMS;
+        leftLevel.levelData = processor.leftBlockMax; //processor.leftRMS;
+        rightLevel.levelData = processor.rightBlockMax; //rightRMS;
         leftLevel.repaint();
         rightLevel.repaint();
         

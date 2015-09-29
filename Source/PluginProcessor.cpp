@@ -14,6 +14,9 @@
 #include <iostream>
 #include <fstream>
 
+
+const float TWO_PI = 2 * M_PI;
+
 //==============================================================================
 TestPluginAudioProcessor::TestPluginAudioProcessor()
 {
@@ -213,8 +216,8 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // Hold the sum of all summed abs L/R samples for average.
     float blockAbsFrameSum = 0;
     
-    // Hold the block's max sample value from left or right.
-    float blockMax = 0;
+    leftBlockMax = 0;
+    rightBlockMax = 0;
     
     if (getNumInputChannels() == 2 && getNumOutputChannels() == 2)
     {
@@ -242,20 +245,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             rightEnergy += (rightChannelData[i] * rightChannelData[i]);
             Rxy0 += leftChannelData[i] * rightChannelData[i];
         
-            // ************ Headroom! ************
-
-            headroomBreached = (std::abs(leftChannelData[i]) > 0.5 || std::abs(rightChannelData[i]) > 0.5) ? true : false;
-
             
-            // Get the maximum sample in this block for dynamic range calculation.
-            if (blockMax < std::abs(leftChannelData[i]))
-            {
-                blockMax = std::abs(leftChannelData[i]);
-            }
-            if (blockMax < std::abs(rightChannelData[i]))
-            {
-                blockMax = std::abs(rightChannelData[i]);
-            }
             
             float frameSum = leftChannelData[i] + rightChannelData[i];
             blockAbsFrameSum += (std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]));
@@ -270,10 +260,44 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 
             }
             
+            // ************ Headroom! ************
+            
+            headroomBreached = (std::abs(leftChannelData[i]) > 0.5 || std::abs(rightChannelData[i]) > 0.5) ? true : false;
+            
+            
+            // Get the maximum sample in this block for dynamic range calculation.
+            if (leftBlockMax < std::abs(leftChannelData[i]))
+            {
+                leftBlockMax = std::abs(leftChannelData[i]);
+            }
+            if (rightBlockMax < std::abs(rightChannelData[i]))
+            {
+                rightBlockMax = std::abs(rightChannelData[i]);
+            }
+            
             // ************ Vectorscope ************
+            
             if (i % vectorScopeStride == 0)
             {
-                vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(leftChannelData[i], rightChannelData[i]);
+
+                // NOTE: R = x and L = y
+//                std::complex<float> val(rightChannelData[i], leftChannelData[i]);
+//                float mag = std::abs(val);
+//                // Here we get the angle of the l/r point, add Pi by 4 to rotate (careful about > Pi) and flip by taking the abs.
+//                float arg = std::arg(val);
+//                float absArg = arg + M_PI_4;
+//                if (mag * sinf(absArg) < 0)
+//                {
+//                    absArg += M_PI;
+//                    vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(mag * cosf(absArg), mag * sinf(absArg));
+//                } else
+//                {
+//                    vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(mag * cosf(absArg), mag * sinf(absArg));
+//                }
+                
+                vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(rightChannelData[i], leftChannelData[i]);
+                
+                
             }
             
             // ************ Bass space ************
@@ -328,12 +352,17 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         {
             blockAverageRMS = 0.001;
         }
-        if (blockMax == 0)
+        if (leftBlockMax == 0)
         {
-            blockMax = 0.001;
+            leftBlockMax = 0.001;
         }
+        if (rightBlockMax == 0)
+        {
+            rightBlockMax = 0.001;
+        }
+        
 
-        dynamicRangeMax[dynamicRangeCounter] = blockMax;
+        dynamicRangeMax[dynamicRangeCounter] = std::max(leftBlockMax, rightBlockMax);
         dynamicRangeAvg[dynamicRangeCounter] = blockAverageRMS;
 //        std::cout << blockMax << " " <<  blockAverage << " " << std::endl;
         
@@ -351,7 +380,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         
     } else
     {
-        // Notify the editor to check the average value of dynamicRange and stereo correlation.
+        // Notify the editor to check the average value of dynamicRange.
         sendChangeMessage();
         dynamicRangeCounter = 0;
     }

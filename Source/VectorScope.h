@@ -29,7 +29,13 @@ public:
    
     void setCurrentPointArray(std::array<juce::Point<float> , numberVectorPoints>);
     
+    // Radius if this a polar sample vectorscope.
+    float radius;
+    
 private:
+    
+    // Normalise the magnitude of the points.
+    void normalisePoints();
     
     // An array of 5 arrays of Point arrays!
     std::array<std::array<juce::Point<float> , numberVectorPoints>, numberVectorBuffers> allPoints { { juce::Point<float>(0,0) } };
@@ -37,7 +43,6 @@ private:
     // Which points are the lates to display.
     int currentPointsIndex = 0;
     
-//    ScopedPointer<ImageComponent> image;
     Path logoPath;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VectorScope)

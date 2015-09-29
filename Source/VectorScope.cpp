@@ -142,8 +142,8 @@ void VectorScope::paint (Graphics& g)
     
     Path path;
     
-    float xOffset = 15.f;
-    float yOffset = 38.f;
+    float xOffset = 21.f;
+    float yOffset = 50.f;
    
     Rectangle<float> rect = logoPath.getBounds();
     Rectangle<int> rect2 = getLocalBounds();
@@ -152,18 +152,23 @@ void VectorScope::paint (Graphics& g)
     g.fillPath (logoPath, RectanglePlacement (RectanglePlacement::stretchToFit)
                 .getTransformToFit (logoPath.getBounds(),
                                     getLocalBounds().toFloat()));
-    
-    float lineLength = 160;
-    g.addTransform(AffineTransform::rotation(-M_PI / 4, lineLength / 2. + xOffset, lineLength / 2. + yOffset));
 
-    
-    // Vertical line
-    path.addLineSegment(Line<float> (lineLength / 2. + xOffset, 0 + yOffset, lineLength / 2. + xOffset, lineLength + yOffset), 1.);
-    
+
+    // Arc
+
+    path.addCentredArc(radius + xOffset, radius + yOffset, radius, radius, 0, -M_PI_2, M_PI_2, true);
+    g.setColour (Colours::lightgrey);
+    g.strokePath (path, PathStrokeType(1.));
+
+    path.clear();
+
     // Horizontal line
-    path.addLineSegment(Line<float> (xOffset, lineLength / 2. + yOffset, lineLength + xOffset, lineLength / 2.  + yOffset), 1.);
-    
-    g.setColour (Colours::black);
+    path.addLineSegment(Line<float> (xOffset, radius + yOffset, radius * 2 + xOffset, radius  + yOffset), 1.);
+
+    // Diagonal lines
+    path.addLineSegment(Line<float> (radius + xOffset, radius + yOffset, radius + radius * cosf(M_PI_4) + xOffset, radius + yOffset -radius * sinf(M_PI_4)), 1.);
+    path.addLineSegment(Line<float> (radius + xOffset, radius + yOffset, radius + xOffset - radius * cosf(M_PI_4), radius + yOffset -radius * sinf(M_PI_4)), 1.);
+    g.setColour (Colours::lightgrey);
     g.fillPath (path);
 
     Path vectorScopePath;
@@ -180,7 +185,7 @@ void VectorScope::paint (Graphics& g)
         } else
         {
             // Set older immediately to less than 0.5 alpha.
-            alpha = 0.5 - ((currentPointsIndex - count + numberVectorBuffers) % numberVectorBuffers) * 0.02;
+            alpha = 0.3 - ((currentPointsIndex - count + numberVectorBuffers) % numberVectorBuffers) * 0.015 ;
         }
         
         g.setColour(Colour::fromFloatRGBA(0, 0 , 0, alpha)) ;
@@ -188,12 +193,11 @@ void VectorScope::paint (Graphics& g)
         for (auto& point : points)
         {
             float temp = point.x;
-            jassert(temp < 1.5);
-            g.setPixel(lineLength / 2. + xOffset + point.x * lineLength / 4., lineLength / 2. + yOffset - point.y * lineLength / 4. );
-//            vectorScopePath.addEllipse(200 + point.x * 100, 200 - point.y * 100, 5, 5);
+//            jassert(temp < 1.1);
+            g.setPixel(radius + xOffset + point.x * radius, radius + yOffset - point.y * radius );
         }
         count++;
-//        g.fillPath(vectorScopePath, AffineTransform::rotation(-M_PI / 4, 200, 200));
+
     }
     
 
@@ -205,16 +209,59 @@ void VectorScope::resized()
     //[UserPreResize] Add your own custom resize code here..
     //[/UserPreResize]
     
-    //    image->setBounds (0, 50, 450, 159);
     //[UserResized] Add your own custom resize handling here..
     //[/UserResized]
 }
 
 void VectorScope::setCurrentPointArray(std::array<juce::Point<float>, numberVectorPoints> currentPoints)
 {
+
     currentPointsIndex = (currentPointsIndex + 1) % numberVectorBuffers;
     allPoints[currentPointsIndex] = currentPoints;
-    
+    this->normalisePoints();
 }
 
+void VectorScope::normalisePoints()
+{
+    std::array<float, numberVectorPoints> args;
+    std::array<float, numberVectorPoints> mags;
+    int count= 0;
+
+    // Get the magnitude and arg of each vector.
+    std::for_each(allPoints[currentPointsIndex].begin(), allPoints[currentPointsIndex].end(), [&](juce::Point<float> point)
+                  {
+                      args[count] = atan2f(point.y, point.x);
+                      mags[count] = sqrtf(point.x * point.x + point.y * point.y);
+                      count++;
+                  } );
+    
+    // Get the max mag to normalise the vectors.
+    float maxMag= *std::max_element(mags.begin(), mags.end());
+    
+    // Normalise the mag, i.e. the max point will be on the circumference.
+    std::for_each(mags.begin(), mags.end(), [&maxMag](float &mag)
+                  {
+                      mag = mag / maxMag;
+                  });
+    
+    // Rotate by PI by 4.
+    std::for_each(args.begin(), args.end(), [](float &arg)
+              {
+                  arg += M_PI_4;
+
+                  // If the point has arg greater than PI or less than zero it is below the x-axis and needs to be rotated around.
+                  if (arg < 0 || arg > M_PI)
+                  {
+                      arg += M_PI;
+                  }
+              });
+    
+    count = 0;
+    std::for_each(allPoints[currentPointsIndex].begin(), allPoints[currentPointsIndex].end(), [&mags, &args, &count](juce::Point<float> &point)
+                  {
+                      point.x = mags[count] * cosf(args[count]);
+                      point.y = mags[count] * sinf(args[count]);
+                      count++;
+                  });
+}
 

@@ -112,6 +112,10 @@ public:
     // Used to get average RMS to 'normalise' the bass space db readings.
     std::array<float, 100> leftRMSFilteredAverage;
         
+    // Hold the block's max sample value from left or right.
+    float leftBlockMax;
+    float rightBlockMax;
+        
 private:
     
     // Used for logo
