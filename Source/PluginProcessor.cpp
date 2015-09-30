@@ -8,6 +8,8 @@
   ==============================================================================
 */
 
+#define _USE_MATH_DEFINES
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include <complex>
