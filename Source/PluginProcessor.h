@@ -16,12 +16,8 @@
 #include <array>
 
 
-
-//==============================================================================
-/**
-*/
 class TestPluginAudioProcessor : public AudioProcessor,
-                                 public ChangeBroadcaster
+                                 public ActionBroadcaster
 {
 public:
     //==============================================================================
@@ -80,7 +76,7 @@ public:
     std::array<float, 8> logoFFTBins;
     
     // Points for vector scope.
-    std::array<juce::Point<float>, numberVectorPoints> vectorScopePoints;
+    std::array<juce::Point<float>, NUMBER_VECTOR_POINTS> vectorScopePoints;
     
     bool headroomBreached = false;
     
@@ -89,10 +85,12 @@ public:
     // Determine whether to sum stereo;
     bool mono = false;
     
-    // TODO: Change name of this var.
     // How many dynmaic range measurements have we taken.
     int dynamicRangeCounter = 0;
     
+    // How many bass space measurements have we taken.
+    int bassSpaceCounter = 0;
+        
     // Hold the dynmaic range for 100 blocks.
     std::array<float, 100>  dynamicRangeMax {};
     std::array<float, 100>  dynamicRangeAvg {};
@@ -118,11 +116,16 @@ public:
         
 private:
     
-    // Used for logo
-    FFT* forwardFFT;
+    // Used for logo and bass space.
+    int fftSize;
+    FFT* forwardFFT = nullptr;
     
-    float* forwardLeftFFTData;
-    float* forwardRightFFTData;
+    // Need to keep track of how full the fft buffer is since block size could be as small as 256.
+    int fftBufferCount = 0;
+    bool fftDataReady = false;
+        
+    float* forwardLeftFFTData = nullptr;
+    float* forwardRightFFTData = nullptr;
     
     // Used to hold result of multilying l and r for correlation.
     float* multipliedFFT;

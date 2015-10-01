@@ -22,7 +22,7 @@
 */
 class TestPluginAudioProcessorEditor  : public AudioProcessorEditor,
                                         public Button::Listener,
-                                        public ChangeListener, // For infrequent broadcasts from processor.
+                                        public ActionListener, // For infrequent broadcasts from processor.
                                         public Timer
 {
 public:
@@ -35,7 +35,7 @@ public:
     
     void buttonClicked      (Button*) override;
     
-    void changeListenerCallback (ChangeBroadcaster* source) override;
+    void actionListenerCallback (const String& message) override;
     
     void timerCallback() override;
 

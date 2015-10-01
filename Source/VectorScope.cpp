@@ -180,14 +180,14 @@ void VectorScope::paint (Graphics& g)
     float alpha = 0;
     for (auto& points : allPoints)
     {
-        if ((currentPointsIndex - count + numberVectorBuffers) % numberVectorBuffers == 0)
+        if ((currentPointsIndex - count + NUMBER_VECTOR_BUFFERS) % NUMBER_VECTOR_BUFFERS == 0)
         {
             // Current array is 'brightest'
             alpha = 1;
         } else
         {
             // Set older immediately to less than 0.5 alpha.
-            alpha = 0.3 - ((currentPointsIndex - count + numberVectorBuffers) % numberVectorBuffers) * 0.015 ;
+            alpha = 0.3 - ((currentPointsIndex - count + NUMBER_VECTOR_BUFFERS) % NUMBER_VECTOR_BUFFERS) * 0.015 ;
         }
         
         g.setColour(Colour::fromFloatRGBA(0, 0 , 0, alpha)) ;
@@ -215,18 +215,18 @@ void VectorScope::resized()
     //[/UserResized]
 }
 
-void VectorScope::setCurrentPointArray(std::array<juce::Point<float>, numberVectorPoints> currentPoints)
+void VectorScope::setCurrentPointArray(std::array<juce::Point<float>, NUMBER_VECTOR_POINTS> currentPoints)
 {
 
-    currentPointsIndex = (currentPointsIndex + 1) % numberVectorBuffers;
+    currentPointsIndex = (currentPointsIndex + 1) % NUMBER_VECTOR_BUFFERS;
     allPoints[currentPointsIndex] = currentPoints;
     this->normalisePoints();
 }
 
 void VectorScope::normalisePoints()
 {
-    std::array<float, numberVectorPoints> args;
-    std::array<float, numberVectorPoints> mags;
+    std::array<float, NUMBER_VECTOR_POINTS> args;
+    std::array<float, NUMBER_VECTOR_POINTS> mags;
     int count= 0;
 
     // Get the magnitude and arg of each vector.

@@ -16,8 +16,17 @@
 #include <iostream>
 #include <fstream>
 
-
-const float TWO_PI = 2 * M_PI;
+// http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+int nextPowerOf2(int v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    return ++v;
+}
 
 //==============================================================================
 TestPluginAudioProcessor::TestPluginAudioProcessor()
@@ -76,7 +85,7 @@ bool TestPluginAudioProcessor::producesMidi() const
 
 bool TestPluginAudioProcessor::silenceInProducesSilenceOut() const
 {
-    return false;
+    return true;
 }
 
 double TestPluginAudioProcessor::getTailLengthSeconds() const
@@ -113,17 +122,25 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    int fftOrder = log2f(samplesPerBlock);
+    
+    /* 
+     For bass space we want fundamental frequency to be equivalent to 44.1K / 1024.
+     i.e. around 43Hz. Then the 4 bass frequencies will be multiples of that.
+    */
+
+    fftSize = nextPowerOf2(int(sampleRate) / 50);
+    
+    int fftOrder = log2f(fftSize);
     forwardFFT = new FFT(fftOrder, false);
-    forwardLeftFFTData = new float[2 * samplesPerBlock]; // To hold real and Complex
-    forwardRightFFTData = new float[2 * samplesPerBlock]; // To hold real and Complex
-    multipliedFFT = new float[2 * samplesPerBlock];
+    forwardLeftFFTData = new float[2 * fftSize]; // To hold real and Complex
+    forwardRightFFTData = new float[2 * fftSize]; // To hold real and Complex
+    multipliedFFT = new float[2 * fftSize];
     
     // Report to UI what the block size is.
     blockSize = samplesPerBlock;
     
     // Get bass space frequencies.
-    float fundamental = (float)sampleRate / (float)samplesPerBlock;
+    float fundamental = (float)sampleRate / (float)fftSize;
     
     for (int i = 0; i < 4; i++) {
         
@@ -146,7 +163,7 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     a_2 = a_0;
     b_1 = (-2 * kappa * kappa + 2 * omega_c * omega_c) / delta;
     b_2 = (-2 * kappa * omega_c + kappa * kappa + omega_c * omega_c) / delta;
-    
+
     
 }
 
@@ -155,9 +172,14 @@ void TestPluginAudioProcessor::releaseResources()
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
     delete forwardFFT;
+    forwardFFT = nullptr;
     delete [] forwardLeftFFTData;
+    forwardLeftFFTData = nullptr;
     delete [] forwardRightFFTData;
+    forwardRightFFTData = nullptr;
     delete [] multipliedFFT;
+    multipliedFFT = nullptr;
+    
 
 }
 
@@ -170,38 +192,55 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // when they first compile the plugin, but obviously you don't need to
     // this code if your algorithm already fills all the output channels.
     
-    dynamicRangeCounter++;
     
     const int numSamples = buffer.getNumSamples();
+    bool cleared = buffer.hasBeenCleared();
     
-    // Just need 100 points for the vector scope
-    int vectorScopeStride = floorf(numSamples / numberVectorPoints);
+    // Just need NUMBER_VECTOR_POINTS points for the vector scope
+    int vectorScopeStride = floorf(numSamples / NUMBER_VECTOR_POINTS);
     int vectorScopeCounter = 0;
     
-//    for (int i = getNumInputChannels(); i < getNumOutputChannels(); ++i)
-//        buffer.clear (i, 0, buffer.getNumSamples());
 
-    // Get left channel FFT (used for logo).
-    const float* channelData = buffer.getReadPointer (0);
-    zeromem (forwardLeftFFTData, numSamples * sizeof (float));
-    memcpy (forwardLeftFFTData, channelData, numSamples * sizeof(float));
+    /*
+     Fill up the fft data buffers. Remember we may have a larger buffer than the block size to get
+     the required fft resolution.
+    */
     
-    // Now get right channel.
-    channelData = buffer.getReadPointer (1);
-    zeromem (forwardRightFFTData, numSamples * sizeof (float));
-    memcpy (forwardRightFFTData, channelData, numSamples * sizeof(float));
-
-    forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData);
-    forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData);
-    
-    // TODO: Use better bins or average across bins.
-    // Maybe don't need this every call.
-    // We've only got 8 bars in the logo. Get bins at 10oHz,200Hz,400Hz, ...
-    for (int i = 0, frequency = 100; i < 8; i++, frequency*=2)
+    // Apparently the block size could vary, if it does then our FFT will have issues.
+    if (blockSize == numSamples)
     {
-        int bin = frequency / (getSampleRate() / numSamples);
-        std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[bin].r, ((FFT::Complex*)forwardLeftFFTData)[bin].i);
-        logoFFTBins[i] = int(std::abs(val)); // Get magnitude, this is just for display effect so just use 'raw' value.
+        // Get left channel FFT (used for logo).
+        const float* channelData = buffer.getReadPointer (0);
+        memcpy (forwardLeftFFTData + fftBufferCount, channelData, numSamples * sizeof(float));
+        
+        // Now get right channel.
+        channelData = buffer.getReadPointer (1);
+        memcpy (forwardRightFFTData + fftBufferCount, channelData, numSamples * sizeof(float));
+
+        if (fftBufferCount + numSamples == fftSize)
+        {
+            // We have a full fft bufffer so do the DFT!
+            forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData);
+            forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData);
+            
+            // TODO: Use better bins or average across bins.
+            // Maybe don't need this every call.
+            // We've only got 8 bars in the logo. Get bins at 10oHz,200Hz,400Hz, ...
+            for (int i = 0, frequency = 100; i < 8; i++, frequency*=2)
+            {
+                int bin = frequency / (getSampleRate() / fftSize);
+                std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[bin].r, ((FFT::Complex*)forwardLeftFFTData)[bin].i);
+                logoFFTBins[i] = int(std::abs(val)); // Get magnitude, this is just for display effect so just use 'raw' value.
+            }
+            
+            fftDataReady = true;
+            fftBufferCount = 0;
+            
+        } else
+        {
+            fftDataReady = false;
+            fftBufferCount += numSamples;
+        }
     }
 
     // Effectively Rxx(0) is the energy in left channel. See Cross correlation comments below.
@@ -279,24 +318,10 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             
             // ************ Vectorscope ************
             
-            if (i % vectorScopeStride == 0)
+            if (i % vectorScopeStride == 0 && vectorScopeCounter < NUMBER_VECTOR_POINTS)
             {
 
-                // NOTE: R = x and L = y
-//                std::complex<float> val(rightChannelData[i], leftChannelData[i]);
-//                float mag = std::abs(val);
-//                // Here we get the angle of the l/r point, add Pi by 4 to rotate (careful about > Pi) and flip by taking the abs.
-//                float arg = std::arg(val);
-//                float absArg = arg + M_PI_4;
-//                if (mag * sinf(absArg) < 0)
-//                {
-//                    absArg += M_PI;
-//                    vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(mag * cosf(absArg), mag * sinf(absArg));
-//                } else
-//                {
-//                    vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(mag * cosf(absArg), mag * sinf(absArg));
-//                }
-                
+                // NOTE: R = x and L = y !
                 vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(rightChannelData[i], leftChannelData[i]);
                 
                 
@@ -366,25 +391,43 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
 
         dynamicRangeMax[dynamicRangeCounter] = std::max(leftBlockMax, rightBlockMax);
         dynamicRangeAvg[dynamicRangeCounter] = blockAverageRMS;
-//        std::cout << blockMax << " " <<  blockAverage << " " << std::endl;
         
-        // For bass space. Get first four bins (after DC).
-        for (int i = 0; i < 4; i++) {
-            
-            // Get the amplitude in dB.
-            std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[i+1].r, ((FFT::Complex*)forwardLeftFFTData)[i+1].i);
-            binAmplitudes[i][dynamicRangeCounter] = 20 * log10(std::abs(val) / (numSamples / 2.)) ;
-            
-        }
-        
-        // Also hold the leftRMSFiltered to use to 'normalise' the bass dB.
-        leftRMSFilteredAverage[dynamicRangeCounter] = leftRMSFiltered;
+      
         
     } else
     {
         // Notify the editor to check the average value of dynamicRange.
-        sendChangeMessage();
+        sendActionMessage(DYNAMIC_RANGE_MESSAGE);
         dynamicRangeCounter = 0;
+    }
+    
+    if (bassSpaceCounter < 100 )
+    {
+        // Also check blockSize as it may vary, rendering the FFT confused!
+        if (fftDataReady && (blockSize == numSamples))
+        {
+            // We have a full fft buffer so we have fft data.
+            
+            // For bass space. Get first four bins (after DC).
+            for (int i = 0; i < 4; i++) {
+                
+                // Get the amplitude in dB.
+                std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[i+1].r, ((FFT::Complex*)forwardLeftFFTData)[i+1].i);
+                binAmplitudes[i][bassSpaceCounter] = 20 * log10(std::abs(val) / (float(fftSize) / 2.)) ;
+
+            }
+            
+            // Also hold the leftRMSFiltered to use to 'normalise' the bass dB.
+            leftRMSFilteredAverage[bassSpaceCounter] = leftRMSFiltered;
+            
+            bassSpaceCounter++;
+        }
+        
+    } else
+    {
+        // Notify the editor to check the average value of bass space.
+        sendActionMessage(BASS_SPACE_MESSAGE);
+        bassSpaceCounter = 0;
     }
     
     
@@ -401,6 +444,9 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         // If the host fails to fill-in the current time, we'll just clear it to a default..
         lastPosInfo.resetToDefault();
     }
+
+    dynamicRangeCounter++;
+    
     
 }
 

@@ -132,14 +132,16 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     // editor's size to whatever you need it to be.
     setSize (745, 410);
     
-    getProcessor().addChangeListener(this);
+    getProcessor().addActionListener(this);
     
     startTimer (20);
 }
 
 TestPluginAudioProcessorEditor::~TestPluginAudioProcessorEditor()
 {
-    getProcessor().removeChangeListener(this);
+    getProcessor().removeActionListener(this);
+    
+    stopTimer();
 }
 
 //==============================================================================
@@ -241,7 +243,7 @@ void TestPluginAudioProcessorEditor::timerCallback()
     } else
     {
         
-        if (vectosScopeFadeoutCount < numberVectorBuffers)
+        if (vectosScopeFadeoutCount < NUMBER_VECTOR_BUFFERS)
         {
             // Seems like we have just stopped playing so fade out vectorscope.
             vectorScope.setCurrentPointArray(std::array<juce::Point<float>, 100>{ juce::Point<float>(0,0) });
@@ -257,35 +259,44 @@ void TestPluginAudioProcessorEditor::timerCallback()
     }
 }
 
-void TestPluginAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster *source)
+void TestPluginAudioProcessorEditor::actionListenerCallback(const String& message)
 {
-    // We have been notified to check the dynamicRange array.
-    TestPluginAudioProcessor& processor = static_cast<TestPluginAudioProcessor&>(*source);
     
-    // Get the average of the dynamicRange, note this is still being changed by the audio thread,
-    // but this is only a heuristic method anyway.
-    float averageDynamicRange = std::accumulate(processor.dynamicRangeAvg.begin(), processor.dynamicRangeAvg.end(), 0.0) / 100;
-    float maxDynamicRange = *std::max_element(processor.dynamicRangeMax.begin(), processor.dynamicRangeMax.end());
+    TestPluginAudioProcessor& processor = getProcessor();
     
-    dynamicHeadroomLevel.levelData = 20 * log10f(maxDynamicRange / averageDynamicRange);
-    dynamicHeadroomLevel.repaint();
+    if (message == DYNAMIC_RANGE_MESSAGE)
+    {
+        // We have been notified to check the dynamicRange array.
 
-    dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange), 2) + "dB", dontSendNotification);
+        // Get the average of the dynamicRange, note this is still being changed by the audio thread,
+        // but this is only a heuristic method anyway.
+        float averageDynamicRange = std::accumulate(processor.dynamicRangeAvg.begin(), processor.dynamicRangeAvg.end(), 0.0) / 100;
+        float maxDynamicRange = *std::max_element(processor.dynamicRangeMax.begin(), processor.dynamicRangeMax.end());
+
+        dynamicHeadroomLevel.levelData = 20 * log10f(maxDynamicRange / averageDynamicRange);
+        dynamicHeadroomLevel.repaint();
+
+        dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange), 2) + "dB", dontSendNotification);
+    }
     
-    float averageFilteredRMSdB = 20 * log10f(std::accumulate(processor.leftRMSFilteredAverage.begin(), processor.leftRMSFilteredAverage.end(), 0.0) / 100);
-    float averageBinLeveldB = std::accumulate(processor.binAmplitudes[0].begin(), processor.binAmplitudes[0].end(), 0.0) / 100;
-    freq1Label.setText("Freq: " + String(processor.binFrequencies[0]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB) , dontSendNotification);
+    if (message == BASS_SPACE_MESSAGE)
+    {
+        float averageFilteredRMSdB = 20 * log10f(std::accumulate(processor.leftRMSFilteredAverage.begin(), processor.leftRMSFilteredAverage.end(), 0.0) / 100);
+        float averageBinLeveldB = std::accumulate(processor.binAmplitudes[0].begin(), processor.binAmplitudes[0].end(), 0.0) / 100;
+        freq1Label.setText("Freq: " + String(processor.binFrequencies[0]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB) , dontSendNotification);
+        
+        averageBinLeveldB = std::accumulate(processor.binAmplitudes[1].begin(), processor.binAmplitudes[1].end(), 0.0) / 100;
+        freq2Label.setText("Freq: " + String(processor.binFrequencies[1]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+        
+        averageBinLeveldB = std::accumulate(processor.binAmplitudes[2].begin(), processor.binAmplitudes[2].end(), 0.0) / 100;
+        freq3Label.setText("Freq: " + String(processor.binFrequencies[2]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+        
+        averageBinLeveldB = std::accumulate(processor.binAmplitudes[3].begin(), processor.binAmplitudes[3].end(), 0.0) / 100;
+        freq4Label.setText("Freq: " + String(processor.binFrequencies[3]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+        
+        blockSizeLabel.setText("Blocksize: " + String(processor.blockSize), dontSendNotification);
+    }
     
-    averageBinLeveldB = std::accumulate(processor.binAmplitudes[1].begin(), processor.binAmplitudes[1].end(), 0.0) / 100;
-    freq2Label.setText("Freq: " + String(processor.binFrequencies[1]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
-    
-    averageBinLeveldB = std::accumulate(processor.binAmplitudes[2].begin(), processor.binAmplitudes[2].end(), 0.0) / 100;
-    freq3Label.setText("Freq: " + String(processor.binFrequencies[2]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
-    
-    averageBinLeveldB = std::accumulate(processor.binAmplitudes[3].begin(), processor.binAmplitudes[3].end(), 0.0) / 100;
-    freq4Label.setText("Freq: " + String(processor.binFrequencies[3]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
-    
-    blockSizeLabel.setText("Blocksize: " + String(processor.blockSize), dontSendNotification);
 
     
 }
