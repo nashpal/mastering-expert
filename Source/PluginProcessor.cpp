@@ -194,10 +194,13 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     
     const int numSamples = buffer.getNumSamples();
-    bool cleared = buffer.hasBeenCleared();
+    
+    jassert(numSamples!=0);
     
     // Just need NUMBER_VECTOR_POINTS points for the vector scope
     int vectorScopeStride = floorf(numSamples / NUMBER_VECTOR_POINTS);
+    vectorScopeStride = vectorScopeStride == 0 ? 1 : vectorScopeStride; // numsamples can be small.
+    
     int vectorScopeCounter = 0;
     
 
@@ -206,7 +209,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
      the required fft resolution.
     */
     
-    // Apparently the block size could vary, if it does then our FFT will have issues.
+    // Apparently the block size could vary, if it does then our FFT will have issues. I have seen a value of 39!
     if (blockSize == numSamples)
     {
         // Get left channel FFT (used for logo).
