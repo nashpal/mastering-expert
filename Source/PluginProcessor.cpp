@@ -131,10 +131,9 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     fftSize = nextPowerOf2(int(sampleRate) / 50);
     
     int fftOrder = log2f(fftSize);
-    forwardFFT = new FFT(fftOrder, false);
-    forwardLeftFFTData = new float[2 * fftSize]; // To hold real and Complex
-    forwardRightFFTData = new float[2 * fftSize]; // To hold real and Complex
-    multipliedFFT = new float[2 * fftSize];
+    forwardFFT.reset(new FFT(fftOrder, false));
+    forwardLeftFFTData.reset(new float[2 * fftSize]);
+    forwardRightFFTData.reset(new float[2 * fftSize]);
     
     // Report to UI what the block size is.
     blockSize = samplesPerBlock;
@@ -171,14 +170,11 @@ void TestPluginAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
-    delete forwardFFT;
-    forwardFFT = nullptr;
-    delete [] forwardLeftFFTData;
-    forwardLeftFFTData = nullptr;
-    delete [] forwardRightFFTData;
-    forwardRightFFTData = nullptr;
-    delete [] multipliedFFT;
-    multipliedFFT = nullptr;
+    
+    forwardFFT.reset();
+    forwardLeftFFTData.reset();
+    forwardRightFFTData.reset();
+
     
 
 }
@@ -214,17 +210,17 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     {
         // Get left channel FFT (used for logo).
         const float* channelData = buffer.getReadPointer (0);
-        memcpy (forwardLeftFFTData + fftBufferCount, channelData, numSamples * sizeof(float));
+        memcpy (&forwardLeftFFTData[fftBufferCount], channelData, numSamples * sizeof(float));
         
         // Now get right channel.
         channelData = buffer.getReadPointer (1);
-        memcpy (forwardRightFFTData + fftBufferCount, channelData, numSamples * sizeof(float));
+        memcpy (&forwardRightFFTData[fftBufferCount], channelData, numSamples * sizeof(float));
 
         if (fftBufferCount + numSamples == fftSize)
         {
             // We have a full fft bufffer so do the DFT!
-            forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData);
-            forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData);
+            forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData.get());
+            forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData.get());
             
             // TODO: Use better bins or average across bins.
             // Maybe don't need this every call.
@@ -232,7 +228,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             for (int i = 0, frequency = 100; i < 8; i++, frequency*=2)
             {
                 int bin = frequency / (getSampleRate() / fftSize);
-                std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[bin].r, ((FFT::Complex*)forwardLeftFFTData)[bin].i);
+                std::complex<float> val(((FFT::Complex*)forwardLeftFFTData.get())[bin].r, ((FFT::Complex*)forwardLeftFFTData.get())[bin].i);
                 logoFFTBins[i] = int(std::abs(val)); // Get magnitude, this is just for display effect so just use 'raw' value.
             }
             
@@ -276,13 +272,6 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             // Cross correlation between l and r is Rxy(0) = Sum (x(n) * y(n)) (left = x, right = y).
             // Normalised to (-1, 1) is Rxy(0) / Sqrt(Rxx(0) Ryy(0)).
             // e.g. see p 114-116 Ch.2 DSP Proakis/Manolakis 2nd Edition.
-            
-//            std::complex<float> leftVal(((FFT::Complex*)forwardLeftFFTData)[i].r, ((FFT::Complex*)forwardLeftFFTData)[i].i);
-//            std::complex<float> rightVal(((FFT::Complex*)forwardRightFFTData)[i].r, ((FFT::Complex*)forwardRightFFTData)[i].i);
-//            
-//            std::complex<float> product = leftVal * rightVal;
-//            ((FFT::Complex*)multipliedFFT)[i].r = product.real();
-//            ((FFT::Complex*)multipliedFFT)[i].i = product.imag();
             
             // Now need energy of l and r
             leftEnergy += (leftChannelData[i] * leftChannelData[i]);
@@ -345,16 +334,11 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             y_1 = leftChannelFiltered;
             x_2 = x_1;
             x_1 = leftChannelData[i];
-            
-//            leftChannelData[i] = leftChannelFiltered;
-//            rightChannelData[i] = leftChannelFiltered;
+
             
             leftEnergyFiltered += (leftChannelFiltered * leftChannelFiltered);
         }
     }
-    
-    // Calculate inverse FFT for cross correlation un-normalised value.
-//    inverseFFT->performRealOnlyInverseTransform(multipliedFFT);
     
     // Calculate RMS
     leftRMS = sqrtf(leftEnergy / numSamples);
@@ -415,7 +399,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             for (int i = 0; i < 4; i++) {
                 
                 // Get the amplitude in dB.
-                std::complex<float> val(((FFT::Complex*)forwardLeftFFTData)[i+1].r, ((FFT::Complex*)forwardLeftFFTData)[i+1].i);
+                std::complex<float> val(((FFT::Complex*)forwardLeftFFTData.get())[i+1].r, ((FFT::Complex*)forwardLeftFFTData.get()  )[i+1].i);
                 binAmplitudes[i][bassSpaceCounter] = 20 * log10(std::abs(val) / (float(fftSize) / 2.)) ;
 
             }

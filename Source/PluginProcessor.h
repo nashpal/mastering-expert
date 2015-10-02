@@ -58,20 +58,6 @@ public:
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     
-    // Our parameters
-    AudioProcessorParameter* gain;
-    
-    enum class ShortFFT : int
-    {
-        Order = 9,
-        Size  = 1 << Order
-    };
-    
-    enum class LongFFT : int
-    {
-        Order = 10,
-        Size  = 1 << Order
-    };
 
     std::array<float, 8> logoFFTBins;
     
@@ -118,18 +104,15 @@ private:
     
     // Used for logo and bass space.
     int fftSize;
-    FFT* forwardFFT = nullptr;
+    std::unique_ptr<FFT> forwardFFT = nullptr;
     
     // Need to keep track of how full the fft buffer is since block size could be as small as 256.
     int fftBufferCount = 0;
     bool fftDataReady = false;
         
-    float* forwardLeftFFTData = nullptr;
-    float* forwardRightFFTData = nullptr;
-    
-    // Used to hold result of multilying l and r for correlation.
-    float* multipliedFFT;
-        
+    std::unique_ptr<float[]> forwardLeftFFTData;
+    std::unique_ptr<float[]> forwardRightFFTData;
+
         
     // Limkwitz-Riley HPF coeffs.
     float a_0;
