@@ -1482,6 +1482,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\BiQuad.h">
+      <Filter>MasteringExpert</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Settings.h">
       <Filter>MasteringExpert</Filter>
     </ClInclude>

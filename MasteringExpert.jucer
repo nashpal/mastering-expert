@@ -11,6 +11,7 @@
               aaxIdentifier="com.masteringthemix.MasteringExpert" pluginAAXCategory="AAX_ePlugInCategory_Dynamics"
               jucerVersion="3.2.0">
   <MAINGROUP id="k39kLe" name="MasteringExpert">
+    <FILE id="WfIXht" name="BiQuad.h" compile="0" resource="0" file="Source/BiQuad.h"/>
     <FILE id="A2LtxC" name="Settings.h" compile="0" resource="0" file="Source/Settings.h"/>
     <FILE id="Do9mvQ" name="LevelMeter.cpp" compile="1" resource="0" file="Source/LevelMeter.cpp"/>
     <FILE id="B4kucy" name="LevelMeter.h" compile="0" resource="0" file="Source/LevelMeter.h"/>

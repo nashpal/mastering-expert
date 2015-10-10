@@ -34,9 +34,17 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     vectorScope.radius = 75;
     addAndMakeVisible(vectorScope);
     
-    headroomBreachedLabel.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(headroomBreachedLabel);
-    headroomBreachedLabel.setFont (Font (15.0f));
+//    headroomBreachedLabel.setJustificationType(juce::Justification::left);
+//    addAndMakeVisible(headroomBreachedLabel);
+//    headroomBreachedLabel.setFont (Font (15.0f));
+    
+    lufsMomentaryLoudnessLabel.setJustificationType(juce::Justification::left);
+    addAndMakeVisible(lufsMomentaryLoudnessLabel);
+    lufsMomentaryLoudnessLabel.setFont (Font (15.0f));
+    
+    lufsShortTermLoudnessLabel.setJustificationType(juce::Justification::left);
+    addAndMakeVisible(lufsShortTermLoudnessLabel);
+    lufsShortTermLoudnessLabel.setFont (Font (15.0f));
     
     addAndMakeVisible(resetButton);
     resetButton.addListener(this);
@@ -130,9 +138,12 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (745, 410);
+    setSize (745, 510);
     
     getProcessor().addActionListener(this);
+    
+    // Fill this with effectively silence.
+    lufsShortTermLoudness.fill(-140);
     
     startTimer (20);
 }
@@ -162,9 +173,12 @@ void TestPluginAudioProcessorEditor::resized()
     logo.setBounds(0, 0, 540, 200);
     vectorScope.setBounds(550, 0, 192, 286);
     
-    headroomBreachedLabel.setBounds(5, 350, 200, 40);
+//    headroomBreachedLabel.setBounds(5, 350, 200, 40);
     leftLevel.setBounds(5, 250, 16, 100);
     rightLevel.setBounds(23, 250, 50, 100);
+    
+    lufsMomentaryLoudnessLabel.setBounds(5, 325, 200, 40);
+    lufsShortTermLoudnessLabel.setBounds(5, 365, 200, 40);
     
     dynamicRangeLabel.setBounds(205, 350, 200, 40);
     dynamicHeadroomLevel.setBounds(205, 250, 50, 100);
@@ -227,10 +241,6 @@ void TestPluginAudioProcessorEditor::timerCallback()
         {
             headroomBreachedLabel.setText("Headroom: Breached", dontSendNotification);
         }
-//        else
-//        {
-//            headroomBreachedLabel.setText("Headroom: OK", dontSendNotification);
-//        }
         
         stereoCorrelationLevel.levelData = processor.stereoCorrelation + 1;
         stereoCorrelationLevel.repaint();
@@ -238,6 +248,7 @@ void TestPluginAudioProcessorEditor::timerCallback()
         
         vectorScope.setCurrentPointArray(processor.vectorScopePoints);
         vectorScope.repaint();
+        
         
         
     } else
@@ -256,6 +267,8 @@ void TestPluginAudioProcessorEditor::timerCallback()
         logo.setFFTBins({ 10, 20, 30, 40, 40, 30, 20, 10 });
         
         logo.repaint();
+        
+        lufsBlockCount = 0;
     }
 }
 
@@ -263,6 +276,92 @@ void TestPluginAudioProcessorEditor::actionListenerCallback(const String& messag
 {
     
     TestPluginAudioProcessor& processor = getProcessor();
+    
+    if (message == LUFS_MESSAGE)
+    {
+        float momentaryLoudnessEnergySum = 0;
+        float shortTermLoudnessEnergySum = 0;
+        
+        // Store this new 100ms block energy value, we have 4 x 100ms blocks here to give a 400ms average.
+        lufsMomentaryLoudnessEnergyBlocks[lufsBlockCount % 4] = processor.lufsMomentaryLoudnessBlockEnergySafe;
+        
+        // Store this new 100ms block energy value, we have 30 x 100ms blocks here to give a 3s average.
+        lufsShortTermLoudnessEnergyBlocks[lufsBlockCount % 30] = processor.lufsMomentaryLoudnessBlockEnergySafe;
+        
+        // Now report the 400ms averaged Momentary Loudness level by summing the four blocks.
+        momentaryLoudnessEnergySum = std::accumulate(lufsMomentaryLoudnessEnergyBlocks.begin(), lufsMomentaryLoudnessEnergyBlocks.end(), 0.0);
+        float lufs = -0.691 + (10 * log10f((1.f / processor.lufsMomentaryLoudnessSampleCount) * momentaryLoudnessEnergySum));
+        lufsMomentaryLoudnessLabel.setText("Momentary LUFS: " + String(lufs, 1), dontSendNotification);
+
+        
+        // Now report the 3s averaged Short Term Loudness level by summing the 30 blocks.
+        shortTermLoudnessEnergySum = std::accumulate(lufsShortTermLoudnessEnergyBlocks.begin(), lufsShortTermLoudnessEnergyBlocks.end(), 0.0);
+        lufs = -0.691 + (10 * log10f((1.f / processor.lufsShortTermLoudnessSampleCount) * shortTermLoudnessEnergySum));
+        lufsShortTermLoudnessLabel.setText("Short Term LUFS: " + String(lufs, 1), dontSendNotification);
+        
+        /*
+        
+         Now to calculate loudness range.
+         
+         https://tech.ebu.ch/docs/tech/tech3342.pdf
+         
+         */
+        
+        // Get vector of short term loudness levels.
+        lufsShortTermLoudness[lufsBlockCount % 30] = lufs;
+        
+        // Apply absolute threshold gating. Remove very quiet parts!
+        std::copy_if(lufsShortTermLoudness.begin(),
+                     lufsShortTermLoudness.end(),
+                     std::back_inserter(lufsAbsoluteGated),
+                     [this](float val) { return val >= LUFS_ABSOLUTE_THRESHOLD;} );
+        
+        // Now lufsGated has levels above absolute threshold.
+        int n = lufsAbsoluteGated.size();
+        
+        // The 10% and 95% values.
+        float lowPercentile = 0;
+        float highPercentile = 0;
+        
+        // Could have been all silent.
+        if (n > 0)
+        {
+            // Remove log to get power back.
+            std::transform(lufsAbsoluteGated.begin(),
+                           lufsAbsoluteGated.end(),
+                           std::back_inserter(lufsLogRemoved) ,
+                           [](float val){ return powf(10, val / 10.f); });
+            
+            // Get the mean power.
+            float meanPower = std::accumulate(lufsLogRemoved.begin(), lufsLogRemoved.end(), 0.0) / n;
+            float meanLufs = 10 * log10f(meanPower);
+            
+            // Now we can get loudness levels above relative threshold.
+            std::copy_if(lufsAbsoluteGated.begin(),
+                         lufsAbsoluteGated.end(),
+                         std::back_inserter(lufsRelativeGated),
+                         [&meanLufs, this](float val) { return val >= meanLufs + LUFS_RELATIVE_THRESHOLD; });
+            
+            n = lufsRelativeGated.size();
+            
+            // Sort these levels that are now above the relative threshold
+            std::sort(lufsRelativeGated.begin(), lufsRelativeGated.end());
+            
+            // Need to get the 10% value and the 90% value
+            lowPercentile = lufsRelativeGated[roundf((n - 1) * LUFS_LOWER_PERCENTILE / 100 + 1)];
+            highPercentile = lufsRelativeGated[roundf((n - 1) * LUFS_UPPER_PERCENTILE / 100 + 1)];
+            
+        }
+        
+        dynamicRangeLabel.setText("Dynamic Range: " + String(highPercentile - lowPercentile, 1) + "LUFS", dontSendNotification);
+        
+        lufsAbsoluteGated.clear();
+        lufsRelativeGated.clear();
+        lufsLogRemoved.clear();
+        
+        lufsBlockCount++;
+        
+    }
     
     if (message == DYNAMIC_RANGE_MESSAGE)
     {
@@ -276,7 +375,7 @@ void TestPluginAudioProcessorEditor::actionListenerCallback(const String& messag
         dynamicHeadroomLevel.levelData = 20 * log10f(maxDynamicRange / averageDynamicRange);
         dynamicHeadroomLevel.repaint();
 
-        dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange), 2) + "dB", dontSendNotification);
+//        dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange), 2) + "dB", dontSendNotification);
     }
     
     if (message == BASS_SPACE_MESSAGE)

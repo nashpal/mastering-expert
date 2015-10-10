@@ -48,6 +48,8 @@ private:
     VectorScope vectorScope;
     
     Label headroomBreachedLabel;
+    Label lufsMomentaryLoudnessLabel;
+    Label lufsShortTermLoudnessLabel;
     Label dynamicRangeLabel;
     Label stereoCorrelationLabel;
     Label bassSpaceLabel;
@@ -76,6 +78,30 @@ private:
     {
         return static_cast<TestPluginAudioProcessor&> (processor);
     }
+    
+    // This will hold the sum of energy for 100ms blocks for 400ms Momentary Loudness.
+    std::array<float, 4> lufsMomentaryLoudnessEnergyBlocks;
+    int lufsBlockCount = 0;
+    
+    // This will hold the sum of energy for 100ms blocks for 3s Short Term Loudness.
+    std::array<float, 30> lufsShortTermLoudnessEnergyBlocks;
+    
+    // Hold a vector of short term loudness values to calculate the Loudness Range.
+    std::array<float, 100> lufsShortTermLoudness;
+    
+    // Resizable array of lufs short term loudness values that are > LUFS_ABSOLUTE_TRESHOLD and < LUFS_RELATIVE_THRESHOLD
+    std::vector<float> lufsAbsoluteGated;
+    
+    // Resizable array of lufs short term loudness values that are < LUFS_RELATIVE_THRESHOLD
+    std::vector<float> lufsRelativeGated;
+    
+    std::vector<float> lufsLogRemoved;
+    
+    // LUFS loudness range constants.
+    const float LUFS_ABSOLUTE_THRESHOLD = -70;
+    const float LUFS_RELATIVE_THRESHOLD = -20;
+    const float LUFS_LOWER_PERCENTILE = 10;
+    const float LUFS_UPPER_PERCENTILE = 95;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TestPluginAudioProcessorEditor)
 };

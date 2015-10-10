@@ -12,6 +12,7 @@
 
 #include "JuceHeader.h"
 #include "Settings.h"
+
 #include <array>
 #include <stdio.h>
 

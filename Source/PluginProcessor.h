@@ -13,8 +13,17 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Settings.h"
+#include "BiQuad.h"
 #include <array>
 
+enum class Mode{
+    
+    HEADROOM,
+    DYNAMIC_RANGE,
+    STEREO,
+    BASS_SPACE,
+    HOME
+};
 
 class TestPluginAudioProcessor : public AudioProcessor,
                                  public ActionBroadcaster
@@ -77,7 +86,7 @@ public:
     // How many bass space measurements have we taken.
     int bassSpaceCounter = 0;
         
-    // Hold the dynmaic range for 100 blocks.
+    // Hold the dynamic range for 100 blocks.
     std::array<float, 100>  dynamicRangeMax {};
     std::array<float, 100>  dynamicRangeAvg {};
         
@@ -99,7 +108,18 @@ public:
     // Hold the block's max sample value from left or right.
     float leftBlockMax;
     float rightBlockMax;
-        
+
+    
+    // Hold 100ms of filtered left/right energy.
+    float lufsMomentaryLoudnessBlockEnergy;
+    float lufsMomentaryLoudnessBlockEnergySafe;
+    
+    // To calculate LUFS momentary loudness we need a 400ms block of data.
+    int lufsMomentaryLoudnessSampleCount;
+    
+    // LUFS value of 3 seconds
+    int lufsShortTermLoudnessSampleCount;
+    
 private:
     
     // Used for logo and bass space.
@@ -113,20 +133,23 @@ private:
     std::unique_ptr<float[]> forwardLeftFFTData;
     std::unique_ptr<float[]> forwardRightFFTData;
 
-        
-    // Limkwitz-Riley HPF coeffs.
-    float a_0;
-    float a_1;
-    float a_2;
-    float b_1;
-    float b_2;
-    float x_1 = 0;
-    float x_2 = 0;
-    float y_1 = 0;
-    float y_2 = 0;
     float leftRMSFiltered;
-        
-        
+    
+    Mode mode = Mode::DYNAMIC_RANGE;
+
+    // Conting for lufs gating block.
+    int sampleCount = 0;
+    
+    float leftLUFSEnergyFiltered = 0;
+    float rightLUFSEnergyFiltered = 0;
+  
+    
+    BiQuad highShelfLeft;
+    BiQuad highShelfRight;
+    BiQuad highPassLeft;
+    BiQuad highPassRight;
+    BiQuad linkwitzRiley;
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TestPluginAudioProcessor)
 };

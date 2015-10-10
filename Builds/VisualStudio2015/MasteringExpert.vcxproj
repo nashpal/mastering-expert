@@ -1210,6 +1210,7 @@
     <ClCompile Include="..\..\..\modules\juce_audio_plugin_client\VST3\juce_VST3_Wrapper.cpp"/>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\BiQuad.h"/>
     <ClInclude Include="..\..\Source\Settings.h"/>
     <ClInclude Include="..\..\Source\LevelMeter.h"/>
     <ClInclude Include="..\..\Source\VectorScope.h"/>

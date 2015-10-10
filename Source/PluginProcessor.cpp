@@ -134,7 +134,7 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     forwardFFT.reset(new FFT(fftOrder, false));
     forwardLeftFFTData.reset(new float[2 * fftSize]);
     forwardRightFFTData.reset(new float[2 * fftSize]);
-    
+
     // Report to UI what the block size is.
     blockSize = samplesPerBlock;
     
@@ -148,20 +148,81 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
         
     }
     
-    // We are going to use a Linkwitz-Riley HPF to calculate a rough idea of of a track's level without bass.
-    // We need this to 'normalise' the bass space dB levels.
+    // Filter cutoff.
+    float f_c = 0;
     
-    // From Designing Audio FX PLug-ins, Pirkle p. 186
-    float f_c = 1000; // Filter cut-off 1000 Hz
-    float theta_c = M_PI * f_c / sampleRate;
+    // Filter cutoff radians.
+    float theta_c = 0;
+    
+    /*
+     
+     Calculations for LUFS based on http://www.itu.int/dms_pubrec/itu-r/rec/bs/R-REC-BS.1770-3-201208-I!!PDF-E.pdf
+     
+     */
+    
+    // 400ms
+    lufsMomentaryLoudnessSampleCount = sampleRate * 0.4;
+    
+    // 3s
+    lufsShortTermLoudnessSampleCount = sampleRate * 3;
+    
+    // K-weighting filter for LUFS. Stage 1. High shelf. 4dB at 1682Hz
+    f_c = 1682;
+    float const gaindB = 4.;
+    float V = powf(10, gaindB/ 20);
+    float K = tanf(M_PI * f_c / sampleRate);
+    
+    // TODO: Subclass BiQuad for filters.
+    float norm = 1 / (1 + M_SQRT2 * K + K * K);
+    highShelfLeft.a0 = (V + sqrtf(2 * V) * K + K * K) * norm;
+    highShelfLeft.a1 = 2 * (K * K - V) * norm;
+    highShelfLeft.a2 = (V - sqrtf(2 * V) * K + K * K) * norm;
+    highShelfLeft.b1 = 2 * (K * K - 1) * norm;
+    highShelfLeft.b2 = (1 - M_SQRT2 * K + K * K) * norm;
+    
+    highShelfRight.a0 = highShelfLeft.a0;
+    highShelfRight.a1 = highShelfLeft.a1;
+    highShelfRight.a2 = highShelfLeft.a2;
+    highShelfRight.b1 = highShelfLeft.b1;
+    highShelfRight.b2 = highShelfLeft.b2;
+    
+    
+    // K-weighting filter for LUFS. Stage 2. High pass. 100Hz
+    f_c = 50;
+    K = tanf(M_PI * f_c / sampleRate);
+    float Q = M_SQRT1_2;
+    norm = 1 / (1 + K / Q + K * K);
+    highPassLeft.a0 = 1 * norm;
+    highPassLeft.a1 = -2 * highPassLeft.a0;
+    highPassLeft.a2 = highPassLeft.a0;
+    highPassLeft.b1 = 2 * (K * K - 1) * norm;
+    highPassLeft.b2 = (1 - K / Q + K * K) * norm;
+    
+    highPassRight.a0 = highPassLeft.a0;
+    highPassRight.a1 = highPassLeft.a1;
+    highPassRight.a2 = highPassLeft.a2;
+    highPassRight.b1 = highPassLeft.b1;
+    highPassRight.b2 = highPassLeft.b2;
+    
+    /*
+    
+     We are going to use a Linkwitz-Riley HPF to calculate a rough idea of of a track's level without bass.
+     We need this to 'normalise' the bass space dB levels.
+     
+     From Designing Audio FX PLug-ins, Pirkle p. 186
+    
+    */
+    
+    f_c = 1000; // Filter cut-off 1000 Hz
+    theta_c = M_PI * f_c / sampleRate;
     float omega_c = M_PI * f_c;
     float kappa = omega_c / tanf(theta_c);
     float delta = kappa * kappa + omega_c * omega_c + 2 * kappa * omega_c;
-    a_0 = (kappa * kappa) / delta;
-    a_1 = (-2 * kappa * kappa) / delta;
-    a_2 = a_0;
-    b_1 = (-2 * kappa * kappa + 2 * omega_c * omega_c) / delta;
-    b_2 = (-2 * kappa * omega_c + kappa * kappa + omega_c * omega_c) / delta;
+    linkwitzRiley.a0 = (kappa * kappa) / delta;
+    linkwitzRiley.a1 = (-2 * kappa * kappa) / delta;
+    linkwitzRiley.a2 = linkwitzRiley.a0;
+    linkwitzRiley.b1 = (-2 * kappa * kappa + 2 * omega_c * omega_c) / delta;
+    linkwitzRiley.b2 = (-2 * kappa * omega_c + kappa * kappa + omega_c * omega_c) / delta;
 
     
 }
@@ -175,7 +236,6 @@ void TestPluginAudioProcessor::releaseResources()
     forwardLeftFFTData.reset();
     forwardRightFFTData.reset();
 
-    
 
 }
 
@@ -198,7 +258,6 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     vectorScopeStride = vectorScopeStride == 0 ? 1 : vectorScopeStride; // numsamples can be small.
     
     int vectorScopeCounter = 0;
-    
 
     /*
      Fill up the fft data buffers. Remember we may have a larger buffer than the block size to get
@@ -224,7 +283,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             
             // TODO: Use better bins or average across bins.
             // Maybe don't need this every call.
-            // We've only got 8 bars in the logo. Get bins at 10oHz,200Hz,400Hz, ...
+            // We've only got 8 bars in the logo. Get bins at 100Hz,200Hz,400Hz, ...
             for (int i = 0, frequency = 100; i < 8; i++, frequency*=2)
             {
                 int bin = frequency / (getSampleRate() / fftSize);
@@ -248,7 +307,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     // Effectively Ryy(0) is the energy in right channel.
     float rightEnergy = 0;
     
-    // Get the energy in the left channel after filtering.
+    // Get the energy in the left/right channel after filtering.
     float leftEnergyFiltered = 0;
     
     float Rxy0 = 0;
@@ -261,10 +320,12 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     if (getNumInputChannels() == 2 && getNumOutputChannels() == 2)
     {
+        float* leftChannelData = buffer.getWritePointer (0);
+        float* rightChannelData = buffer.getWritePointer (1);
+        
         for (int i = 0; i < numSamples; ++i)
         {
-            float* leftChannelData = buffer.getWritePointer (0);
-            float* rightChannelData = buffer.getWritePointer (1);
+            
 
             
             // ************ Cross correlation ************
@@ -319,24 +380,59 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 
             }
             
-            // ************ Bass space ************
-            
-            // Apply Linkwitz-Riley filter
-            
-            if (i <=2)
-            {
-                
+            switch (mode) {
+                case Mode::DYNAMIC_RANGE:
+                    
+                    {
+//                        float leftChannelFiltered = hs_a_0 * leftChannelData[i] + hs_a_1 * x_1 + hs_a_2 * x_2 - hs_b_1 * y_1 - hs_b_2 * y_2;
+                        float leftChannelFiltered = highShelfLeft.doBiQuad(leftChannelData[i]);
+                        float rightChannelFiltered = highShelfRight.doBiQuad(rightChannelData[i]);
+                        leftChannelFiltered = highPassLeft.doBiQuad(leftChannelFiltered);
+                        rightChannelFiltered = highPassRight.doBiQuad(rightChannelFiltered);
+                        
+                        leftLUFSEnergyFiltered += (leftChannelFiltered * leftChannelFiltered);
+                        rightLUFSEnergyFiltered += (rightChannelFiltered * rightChannelFiltered);
+
+                        lufsMomentaryLoudnessBlockEnergy += (leftChannelFiltered * leftChannelFiltered) + (rightChannelFiltered * rightChannelFiltered);
+                        
+                        // We have moved ahead by 100ms, now get the gating block loudness.
+                        if (sampleCount == lufsMomentaryLoudnessSampleCount / 4) {
+ 
+                            // Park this sum for the UI thread to use.
+                            lufsMomentaryLoudnessBlockEnergySafe = lufsMomentaryLoudnessBlockEnergy;
+                            
+                            // Reset
+                            lufsMomentaryLoudnessBlockEnergy = 0;
+                            sampleCount = 0;
+                            
+                            sendActionMessage(LUFS_MESSAGE);
+                            
+                        }
+                        
+                        sampleCount++;
+                    }
+                    
+                    break;
+                    
+                    case Mode::BASS_SPACE:
+                    {
+                        // ************ Bass space ************
+                        
+                        // Apply Linkwitz-Riley filter
+                        
+                        // Apply filter to left channel: y(n) = a0 * x(n) + a1 * x(n-1) + a2 * x(n-2) - b1 * y(n-1) - b2 * y(n-2).
+//                        float leftChannelFiltered = a_0 * leftChannelData[i] + a_1 * x_1 + a_2 * x_2 - b_1 * y_1 - b_2 * y_2;
+                        float leftChannelFiltered = linkwitzRiley.doBiQuad(leftChannelData[i] );
+                     
+                        leftEnergyFiltered += (leftChannelFiltered * leftChannelFiltered);
+                    }
+                    
+                    break;
+                    
+                default:
+                    break;
             }
             
-            // Apply filter to left channel: y(n) = a0 * x(n) + a1 * x(n-1) + a2 * x(n-2) - b1 * y(n-1) - b2 * y(n-2).
-            float leftChannelFiltered = a_0 * leftChannelData[i] + a_1 * x_1 + a_2 * x_2 - b_1 * y_1 - b_2 * y_2;
-            y_2 = y_1;
-            y_1 = leftChannelFiltered;
-            x_2 = x_1;
-            x_1 = leftChannelData[i];
-
-            
-            leftEnergyFiltered += (leftChannelFiltered * leftChannelFiltered);
         }
     }
     
