@@ -44,6 +44,12 @@ private:
     // Reset display.
     void reset();
     
+    // Hide all components.
+    void hideComponents();
+    
+    // Show main components including nav buttons, hyper link.
+    void showComponents();
+    
     EmbeddedImage logo;
     VectorScope vectorScope;
     
@@ -53,6 +59,13 @@ private:
     Label dynamicRangeLabel;
     Label stereoCorrelationLabel;
     Label bassSpaceLabel;
+    
+    TextButton homeButton;
+    
+    TextButton headroomButton;
+    TextButton dynamicRangeButton;
+    TextButton stereoButton;
+    TextButton bassSpaceButton;
     
     TextButton resetButton;
     TextButton monoButton;

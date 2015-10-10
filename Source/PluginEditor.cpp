@@ -29,44 +29,75 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
 
 {
     
+    
     addAndMakeVisible(&logo);
     
     vectorScope.radius = 75;
-    addAndMakeVisible(vectorScope);
+//    addAndMakeVisible(vectorScope);
+    addChildComponent(vectorScope);
     
-//    headroomBreachedLabel.setJustificationType(juce::Justification::left);
+    headroomBreachedLabel.setJustificationType(juce::Justification::left);
+    headroomBreachedLabel.setFont (Font (15.0f));
 //    addAndMakeVisible(headroomBreachedLabel);
-//    headroomBreachedLabel.setFont (Font (15.0f));
+    addChildComponent(headroomBreachedLabel);
     
     lufsMomentaryLoudnessLabel.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(lufsMomentaryLoudnessLabel);
     lufsMomentaryLoudnessLabel.setFont (Font (15.0f));
-    
+//    addAndMakeVisible(lufsMomentaryLoudnessLabel);
+    addChildComponent(lufsMomentaryLoudnessLabel);
+                  
     lufsShortTermLoudnessLabel.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(lufsShortTermLoudnessLabel);
     lufsShortTermLoudnessLabel.setFont (Font (15.0f));
+//    addAndMakeVisible(lufsShortTermLoudnessLabel);
+    addChildComponent(lufsShortTermLoudnessLabel);
     
-    addAndMakeVisible(resetButton);
+    addAndMakeVisible(homeButton);
+    homeButton.addListener(this);
+    homeButton.setButtonText("Home");
+    
+    addAndMakeVisible(headroomButton);
+    headroomButton.addListener(this);
+    headroomButton.setButtonText("Heaadroom");
+    
+    addAndMakeVisible(dynamicRangeButton);
+    dynamicRangeButton.addListener(this);
+    dynamicRangeButton.setButtonText("Dynamic Range");
+    
+    addAndMakeVisible(stereoButton);
+    stereoButton.addListener(this);
+    stereoButton.setButtonText("Stereo");
+    
+    addAndMakeVisible(bassSpaceButton);
+    bassSpaceButton.addListener(this);
+    bassSpaceButton.setButtonText("Bass Space");
+    
     resetButton.addListener(this);
-    
-    addAndMakeVisible(monoButton);
+//    addAndMakeVisible(resetButton);
+    addChildComponent(resetButton);
+
     monoButton.addListener(this);
+//    addAndMakeVisible(monoButton);
+    addChildComponent(monoButton);
     
     dynamicRangeLabel.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(dynamicRangeLabel);
     dynamicRangeLabel.setFont (Font (15.0f));
+//    addAndMakeVisible(dynamicRangeLabel);
+    addChildComponent(dynamicRangeLabel);
     
     stereoCorrelationLabel.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(stereoCorrelationLabel);
     stereoCorrelationLabel.setFont(Font(15.0f));
-
+//    addAndMakeVisible(stereoCorrelationLabel);
+    addChildComponent(stereoCorrelationLabel);
+    
     bassSpaceLabel.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(bassSpaceLabel);
     bassSpaceLabel.setFont(Font(15.0f));
+//    addAndMakeVisible(bassSpaceLabel);
+    addChildComponent(bassSpaceLabel);
 
-    addAndMakeVisible(hyperLink);
     hyperLink.setTooltip(String("www.masteringthemix.com"));
     hyperLink.setFont(Font(15.0f), false, juce::Justification::left);
+//    addAndMakeVisible(hyperLink);
+    addChildComponent(hyperLink);
     
     leftLevel.barCount = 20;
     leftLevel.barWidth = 16;
@@ -78,7 +109,8 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     leftLevel.underColour = Colours::green;
     leftLevel.barColour = Colours::black;
     leftLevel.meterType = MeterType::NORMAL;
-    addAndMakeVisible(leftLevel);
+//    addAndMakeVisible(leftLevel);
+    addChildComponent(leftLevel);
     
     rightLevel.barCount = 20;
     rightLevel.barWidth = 16;
@@ -90,7 +122,9 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     rightLevel.underColour = Colours::green;
     rightLevel.barColour = Colours::black;
     rightLevel.meterType = MeterType::NORMAL;
-    addAndMakeVisible(rightLevel);
+//    addAndMakeVisible(rightLevel);
+    addChildComponent(rightLevel);
+    
     
     dynamicHeadroomLevel.barCount = 20;
     dynamicHeadroomLevel.barWidth = 16;
@@ -102,7 +136,8 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     dynamicHeadroomLevel.underColour = Colours::green;
     dynamicHeadroomLevel.barColour = Colours::black;
     dynamicHeadroomLevel.meterType = MeterType::DYNAMICRANGE;
-    addAndMakeVisible(dynamicHeadroomLevel);
+//    addAndMakeVisible(dynamicHeadroomLevel);
+    addChildComponent(dynamicHeadroomLevel);
     
     stereoCorrelationLevel.barCount = 20;
     stereoCorrelationLevel.barWidth = 16;
@@ -114,27 +149,33 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     stereoCorrelationLevel.underColour = Colours::green;
     stereoCorrelationLevel.barColour = Colours::black;
     stereoCorrelationLevel.meterType = MeterType::CORRRELATION;
-    addAndMakeVisible(stereoCorrelationLevel);
+//    addAndMakeVisible(stereoCorrelationLevel);
+    addChildComponent(stereoCorrelationLevel);
     
     freq1Label.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(freq1Label);
     freq1Label.setFont(Font(10.0f));
+//    addAndMakeVisible(freq1Label);
+    addChildComponent(freq1Label);
     
     freq2Label.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(freq2Label);
     freq2Label.setFont(Font(10.0f));
+//    addAndMakeVisible(freq2Label);
+    addChildComponent(freq2Label);
     
     freq3Label.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(freq3Label);
     freq3Label.setFont(Font(10.0f));
+//    addAndMakeVisible(freq3Label);
+    addChildComponent(freq3Label);
     
     freq4Label.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(freq4Label);
     freq4Label.setFont(Font(10.0f));
+//    addAndMakeVisible(freq4Label);
+    addChildComponent(freq4Label);
     
     blockSizeLabel.setJustificationType(juce::Justification::left);
-    addAndMakeVisible(blockSizeLabel);
     blockSizeLabel.setFont(Font(10.0f));
+//    addAndMakeVisible(blockSizeLabel);
+    addChildComponent(blockSizeLabel);
     
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -161,22 +202,20 @@ void TestPluginAudioProcessorEditor::paint (Graphics& g)
     
     g.fillAll (Colours::white);
 
-//    g.setColour (Colours::black);
-//    g.setFont (15.0f);
-//    g.drawFittedText ("Hello World!", getLocalBounds(), Justification::centred, 1);
 }
 
 void TestPluginAudioProcessorEditor::resized()
 {
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
+    
     logo.setBounds(0, 0, 540, 200);
     vectorScope.setBounds(550, 0, 192, 286);
     
-//    headroomBreachedLabel.setBounds(5, 350, 200, 40);
-    leftLevel.setBounds(5, 250, 16, 100);
-    rightLevel.setBounds(23, 250, 50, 100);
     
+    leftLevel.setBounds(5, 150, 16, 100);
+    rightLevel.setBounds(23, 150, 50, 100);
+    headroomBreachedLabel.setBounds(5, 285, 200, 40);
     lufsMomentaryLoudnessLabel.setBounds(5, 325, 200, 40);
     lufsShortTermLoudnessLabel.setBounds(5, 365, 200, 40);
     
@@ -194,10 +233,16 @@ void TestPluginAudioProcessorEditor::resized()
     freq4Label.setBounds(605, 320, 100, 25);
     blockSizeLabel.setBounds(605, 200, 100, 25);
     
+    homeButton.setBounds(4, 440, 50, 20);
+    headroomButton.setBounds(5, 400, 100, 20);
+    dynamicRangeButton.setBounds(205, 400, 150, 20);
+    stereoButton.setBounds(405, 400, 50, 20);
+    bassSpaceButton.setBounds(605, 400, 150, 20);
+    
     resetButton.setBounds(5, 210, 50, 20);
     monoButton.setBounds(60, 210, 50, 20);
     
-    hyperLink.setBounds(0, 380, 300, 40);
+    hyperLink.setBounds(0, 470, 300, 40);
 }
 
 
@@ -216,6 +261,60 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         monoButton.setToggleState(!monoButton.getToggleState(), dontSendNotification);
         
         getProcessor().mono = monoButton.getToggleState();
+    }
+    
+    if (button == &headroomButton)
+    {
+        this->hideComponents();
+        this->showComponents();
+        
+        leftLevel.setVisible(true);
+        rightLevel.setVisible(true);
+        headroomBreachedLabel.setVisible(true);
+        lufsMomentaryLoudnessLabel.setVisible(true);
+        lufsShortTermLoudnessLabel.setVisible(true);
+
+ 
+    }
+    
+    if (button == &dynamicRangeButton)
+    {
+        this->hideComponents();
+        this->showComponents();
+        
+        dynamicHeadroomLevel.setVisible(true);
+        dynamicRangeLabel.setVisible(true);
+
+    }
+    
+    if(button == &stereoButton)
+    {
+        this->hideComponents();
+        this->showComponents();
+        
+        stereoCorrelationLevel.setVisible(true);
+        vectorScope.setVisible(true);
+
+    }
+    
+    if(button == &bassSpaceButton)
+    {
+        this->hideComponents();
+        this->showComponents();
+        
+        freq1Label.setVisible(true);
+        freq2Label.setVisible(true);
+        freq3Label.setVisible(true);
+        freq4Label.setVisible(true);
+
+    }
+    
+    if(button == &homeButton)
+    {
+        this->hideComponents();
+        this->showComponents();
+        
+        logo.setVisible(true);
     }
     
 }
@@ -407,4 +506,23 @@ void TestPluginAudioProcessorEditor::reset()
     processor.headroomBreached = false;
     
     headroomBreachedLabel.setText("Headroom: OK", dontSendNotification);
+}
+
+void TestPluginAudioProcessorEditor::hideComponents()
+{
+    int numChildren = this->getNumChildComponents();
+    
+    for (int i = 0; i < numChildren; i++) {
+        this->getChildComponent(i)->setVisible(false);
+    }
+}
+
+void TestPluginAudioProcessorEditor::showComponents()
+{
+    headroomButton.setVisible(true);
+    dynamicRangeButton.setVisible(true);
+    stereoButton.setVisible(true);
+    bassSpaceButton.setVisible(true);
+    homeButton.setVisible(true);
+    hyperLink.setVisible(true);
 }
