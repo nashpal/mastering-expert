@@ -16,14 +16,6 @@
 #include "BiQuad.h"
 #include <array>
 
-enum class Mode{
-    
-    HEADROOM,
-    DYNAMIC_RANGE,
-    STEREO,
-    BASS_SPACE,
-    HOME
-};
 
 class TestPluginAudioProcessor : public AudioProcessor,
                                  public ActionBroadcaster
@@ -70,8 +62,8 @@ public:
 
     std::array<float, 8> logoFFTBins;
     
-    // Points for vector scope.
-    std::array<juce::Point<float>, NUMBER_VECTOR_POINTS> vectorScopePoints;
+    // Points for vectorscope and oscilloscope.
+    std::array<juce::Point<float>, UIConstants::NUMBER_SCOPE_POINTS> scopePoints;
     
     bool headroomBreached = false;
     
@@ -120,6 +112,8 @@ public:
     // LUFS value of 3 seconds
     int lufsShortTermLoudnessSampleCount;
     
+    UIConstants::Mode mode = UIConstants::Mode::DYNAMIC_RANGE;
+    
 private:
     
     // Used for logo and bass space.
@@ -134,14 +128,9 @@ private:
     std::unique_ptr<float[]> forwardRightFFTData;
 
     float leftRMSFiltered;
-    
-    Mode mode = Mode::DYNAMIC_RANGE;
 
     // Conting for lufs gating block.
     int sampleCount = 0;
-    
-    float leftLUFSEnergyFiltered = 0;
-    float rightLUFSEnergyFiltered = 0;
   
     
     BiQuad highShelfLeft;

@@ -136,6 +136,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\Oscilloscope.cpp"/>
     <ClCompile Include="..\..\Source\LevelMeter.cpp"/>
     <ClCompile Include="..\..\Source\VectorScope.cpp"/>
     <ClCompile Include="..\..\Source\EmbeddedImage.cpp"/>
@@ -1210,6 +1211,7 @@
     <ClCompile Include="..\..\..\modules\juce_audio_plugin_client\VST3\juce_VST3_Wrapper.cpp"/>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Oscilloscope.h"/>
     <ClInclude Include="..\..\Source\BiQuad.h"/>
     <ClInclude Include="..\..\Source\Settings.h"/>
     <ClInclude Include="..\..\Source\LevelMeter.h"/>

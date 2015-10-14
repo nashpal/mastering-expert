@@ -125,7 +125,7 @@ static const unsigned char pathData[] = { 110,109,143,226,119,67,72,65,197,67,10
 //==============================================================================
 VectorScope::VectorScope ()
 {
-    
+    // TODO: Is this the best place to load?
     logoPath.loadPathFromData (pathData, sizeof (pathData));
 //    setSize (277, 394);
     
@@ -147,6 +147,7 @@ void VectorScope::paint (Graphics& g)
     float xOffset = 21.f;
     float yOffset = 50.f;
    
+    // TODO: Use this to work out offsets?
     Rectangle<float> rect = logoPath.getBounds();
     Rectangle<int> rect2 = getLocalBounds();
     
@@ -180,14 +181,14 @@ void VectorScope::paint (Graphics& g)
     float alpha = 0;
     for (auto& points : allPoints)
     {
-        if ((currentPointsIndex - count + NUMBER_VECTOR_BUFFERS) % NUMBER_VECTOR_BUFFERS == 0)
+        if ((currentPointsIndex - count + UIConstants::NUMBER_SCOPE_BUFFERS) % UIConstants::NUMBER_SCOPE_BUFFERS == 0)
         {
             // Current array is 'brightest'
             alpha = 1;
         } else
         {
             // Set older immediately to less than 0.5 alpha.
-            alpha = 0.3 - ((currentPointsIndex - count + NUMBER_VECTOR_BUFFERS) % NUMBER_VECTOR_BUFFERS) * 0.015 ;
+            alpha = 0.3 - ((currentPointsIndex - count + UIConstants::NUMBER_SCOPE_BUFFERS) % UIConstants::NUMBER_SCOPE_BUFFERS) * 0.015 ;
         }
         
         g.setColour(Colour::fromFloatRGBA(0, 0 , 0, alpha)) ;
@@ -215,21 +216,22 @@ void VectorScope::resized()
     //[/UserResized]
 }
 
-void VectorScope::setCurrentPointArray(std::array<juce::Point<float>, NUMBER_VECTOR_POINTS> currentPoints)
+void VectorScope::setCurrentPointArray(std::array<juce::Point<float>, UIConstants::NUMBER_SCOPE_POINTS> currentPoints)
 {
 
-    currentPointsIndex = (currentPointsIndex + 1) % NUMBER_VECTOR_BUFFERS;
+    currentPointsIndex = (currentPointsIndex + 1) % UIConstants::NUMBER_SCOPE_BUFFERS;
     allPoints[currentPointsIndex] = currentPoints;
     this->normalisePoints();
 }
 
 void VectorScope::normalisePoints()
 {
-    std::array<float, NUMBER_VECTOR_POINTS> args;
-    std::array<float, NUMBER_VECTOR_POINTS> mags;
+    std::array<float, UIConstants::NUMBER_SCOPE_POINTS> args;
+    std::array<float, UIConstants::NUMBER_SCOPE_POINTS> mags;
     int count= 0;
 
     // Get the magnitude and arg of each vector.
+    // TODO: Accelerate or equivalent?
     std::for_each(allPoints[currentPointsIndex].begin(), allPoints[currentPointsIndex].end(), [&](juce::Point<float> point)
                   {
                       args[count] = atan2f(point.y, point.x);

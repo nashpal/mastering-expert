@@ -241,66 +241,14 @@ void TestPluginAudioProcessor::releaseResources()
 
 void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // I've added this to avoid people getting screaming feedback
-    // when they first compile the plugin, but obviously you don't need to
-    // this code if your algorithm already fills all the output channels.
-    
-    
+
     const int numSamples = buffer.getNumSamples();
     
     jassert(numSamples!=0);
     
-    // Just need NUMBER_VECTOR_POINTS points for the vector scope
-    int vectorScopeStride = floorf(numSamples / NUMBER_VECTOR_POINTS);
-    vectorScopeStride = vectorScopeStride == 0 ? 1 : vectorScopeStride; // numsamples can be small.
+    int scopeStride = 0;
+    int scopeCounter = 0;
     
-    int vectorScopeCounter = 0;
-
-    /*
-     Fill up the fft data buffers. Remember we may have a larger buffer than the block size to get
-     the required fft resolution.
-    */
-    
-    // Apparently the block size could vary, if it does then our FFT will have issues. I have seen a value of 39!
-    if (blockSize == numSamples)
-    {
-        // Get left channel FFT (used for logo).
-        const float* channelData = buffer.getReadPointer (0);
-        memcpy (&forwardLeftFFTData[fftBufferCount], channelData, numSamples * sizeof(float));
-        
-        // Now get right channel.
-        channelData = buffer.getReadPointer (1);
-        memcpy (&forwardRightFFTData[fftBufferCount], channelData, numSamples * sizeof(float));
-
-        if (fftBufferCount + numSamples == fftSize)
-        {
-            // We have a full fft bufffer so do the DFT!
-            forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData.get());
-            forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData.get());
-            
-            // TODO: Use better bins or average across bins.
-            // Maybe don't need this every call.
-            // We've only got 8 bars in the logo. Get bins at 100Hz,200Hz,400Hz, ...
-            for (int i = 0, frequency = 100; i < 8; i++, frequency*=2)
-            {
-                int bin = frequency / (getSampleRate() / fftSize);
-                std::complex<float> val(((FFT::Complex*)forwardLeftFFTData.get())[bin].r, ((FFT::Complex*)forwardLeftFFTData.get())[bin].i);
-                logoFFTBins[i] = int(std::abs(val)); // Get magnitude, this is just for display effect so just use 'raw' value.
-            }
-            
-            fftDataReady = true;
-            fftBufferCount = 0;
-            
-        } else
-        {
-            fftDataReady = false;
-            fftBufferCount += numSamples;
-        }
-    }
-
     // Effectively Rxx(0) is the energy in left channel. See Cross correlation comments below.
     float leftEnergy = 0;
     
@@ -312,11 +260,61 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
     
     float Rxy0 = 0;
     
-    // Hold the sum of all summed abs L/R samples for average.
-    float blockAbsFrameSum = 0;
-    
     leftBlockMax = 0;
     rightBlockMax = 0;
+    
+    if (mode == UIConstants::Mode::DYNAMIC_RANGE || mode == UIConstants::Mode::STEREO)
+    {
+        // Just need NUMBER_SCOPE_POINTS points for the 'scopes
+        scopeStride = floorf(numSamples / UIConstants::NUMBER_SCOPE_POINTS);
+        scopeStride = scopeStride == 0 ? 1 : scopeStride; // numsamples can be small.
+    }
+
+    if (mode == UIConstants::Mode::HOME || mode == UIConstants::Mode::BASS_SPACE)
+    {
+        /*
+         Fill up the fft data buffers. Remember we may have a larger buffer than the block size to get
+         the required fft resolution.
+        */
+        
+        // Apparently the block size could vary, if it does then our FFT will have issues. I have seen a value of 39!
+        if (blockSize == numSamples)
+        {
+            // Get left channel FFT (used for logo).
+            const float* channelData = buffer.getReadPointer (0);
+            memcpy (&forwardLeftFFTData[fftBufferCount], channelData, numSamples * sizeof(float));
+            
+            // Now get right channel.
+            channelData = buffer.getReadPointer (1);
+            memcpy (&forwardRightFFTData[fftBufferCount], channelData, numSamples * sizeof(float));
+
+            if (fftBufferCount + numSamples == fftSize)
+            {
+                // We have a full fft bufffer so do the DFT!
+                forwardFFT->performRealOnlyForwardTransform(forwardLeftFFTData.get());
+                forwardFFT->performRealOnlyForwardTransform(forwardRightFFTData.get());
+                
+                // TODO: Use better bins or average across bins.
+                // Maybe don't need this every call.
+                // We've only got 8 bars in the logo. Get bins at 100Hz,200Hz,400Hz, ...
+                for (int i = 0, frequency = 100; i < 8; i++, frequency*=2)
+                {
+                    int bin = frequency / (getSampleRate() / fftSize);
+                    std::complex<float> val(((FFT::Complex*)forwardLeftFFTData.get())[bin].r, ((FFT::Complex*)forwardLeftFFTData.get())[bin].i);
+                    logoFFTBins[i] = int(std::abs(val)); // Get magnitude, this is just for display effect so just use 'raw' value.
+                }
+                
+                fftDataReady = true;
+                fftBufferCount = 0;
+                
+            } else
+            {
+                fftDataReady = false;
+                fftBufferCount += numSamples;
+            }
+        }
+    }
+
     
     if (getNumInputChannels() == 2 && getNumOutputChannels() == 2)
     {
@@ -325,26 +323,15 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         
         for (int i = 0; i < numSamples; ++i)
         {
-            
 
-            
-            // ************ Cross correlation ************
-            
-            // Cross correlation between l and r is Rxy(0) = Sum (x(n) * y(n)) (left = x, right = y).
-            // Normalised to (-1, 1) is Rxy(0) / Sqrt(Rxx(0) Ryy(0)).
-            // e.g. see p 114-116 Ch.2 DSP Proakis/Manolakis 2nd Edition.
-            
-            // Now need energy of l and r
+            // Just about everyone wants energy of l and r
             leftEnergy += (leftChannelData[i] * leftChannelData[i]);
             rightEnergy += (rightChannelData[i] * rightChannelData[i]);
-            Rxy0 += leftChannelData[i] * rightChannelData[i];
-        
             
-            
-            float frameSum = leftChannelData[i] + rightChannelData[i];
-            blockAbsFrameSum += (std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]));
             
             // ************ Mono playback! ************
+            float frameSum = leftChannelData[i] + rightChannelData[i];
+            
             if (mono)
             {
                 float frameSumAverage = frameSum / 2.f;
@@ -353,166 +340,197 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 rightChannelData[i] = frameSumAverage;
                 
             }
-            
-            // ************ Headroom! ************
-            
-            headroomBreached = (std::abs(leftChannelData[i]) > 0.5 || std::abs(rightChannelData[i]) > 0.5) ? true : false;
-            
-            
-            // Get the maximum sample in this block for dynamic range calculation.
-            if (leftBlockMax < std::abs(leftChannelData[i]))
+
+            if (mode == UIConstants::Mode::HEADROOM)
             {
-                leftBlockMax = std::abs(leftChannelData[i]);
+                
+                // ************ Headroom! ************
+                
+                if (!headroomBreached)
+                {
+                    headroomBreached = (std::abs(leftChannelData[i]) > 0.5 || std::abs(rightChannelData[i]) > 0.5) ? true : false;
+                }
+            
+                // ************ LUFS ************
+                
+                //float leftChannelFiltered = hs_a_0 * leftChannelData[i] + hs_a_1 * x_1 + hs_a_2 * x_2 - hs_b_1 * y_1 - hs_b_2 * y_2;
+                float leftChannelFiltered = highShelfLeft.doBiQuad(leftChannelData[i]);
+                float rightChannelFiltered = highShelfRight.doBiQuad(rightChannelData[i]);
+                
+                leftChannelFiltered = highPassLeft.doBiQuad(leftChannelFiltered);
+                rightChannelFiltered = highPassRight.doBiQuad(rightChannelFiltered);
+                
+                lufsMomentaryLoudnessBlockEnergy += (leftChannelFiltered * leftChannelFiltered) + (rightChannelFiltered * rightChannelFiltered);
+                
+                // We have moved ahead by 100ms, now get the gating block loudness.
+                if (sampleCount == lufsMomentaryLoudnessSampleCount / 4) {
+                    
+                    // Park this sum for the UI thread to use.
+                    lufsMomentaryLoudnessBlockEnergySafe = lufsMomentaryLoudnessBlockEnergy;
+                    
+                    // Reset
+                    lufsMomentaryLoudnessBlockEnergy = 0;
+                    sampleCount = 0;
+                    
+                    sendActionMessage(UIConstants::LUFS_MESSAGE);
+                    
+                }
+                
+                sampleCount++;
             }
-            if (rightBlockMax < std::abs(rightChannelData[i]))
+                
+            if (mode == UIConstants::Mode::DYNAMIC_RANGE || mode == UIConstants::Mode::STEREO)
             {
-                rightBlockMax = std::abs(rightChannelData[i]);
+                // ************ Vectorscope/Oscilloscope ************
+                
+                if (i % scopeStride == 0 && scopeCounter < UIConstants::NUMBER_SCOPE_POINTS)
+                {
+                    
+                    // NOTE: R = x and L = y ! This is what polar vectorscope requires.
+                    // Repurpose this also for oscilloscope.
+                    scopePoints[scopeCounter++] = juce::Point<float>(rightChannelData[i], leftChannelData[i]);
+                    
+                    
+                }
             }
             
-            // ************ Vectorscope ************
-            
-            if (i % vectorScopeStride == 0 && vectorScopeCounter < NUMBER_VECTOR_POINTS)
+            if (mode == UIConstants::Mode::DYNAMIC_RANGE)
             {
-
-                // NOTE: R = x and L = y !
-                vectorScopePoints[vectorScopeCounter++] = juce::Point<float>(rightChannelData[i], leftChannelData[i]);
-                
-                
+                // Get the maximum sample in this block for dynamic range calculation.
+                if (leftBlockMax < std::abs(leftChannelData[i]))
+                {
+                    leftBlockMax = std::abs(leftChannelData[i]);
+                }
+                if (rightBlockMax < std::abs(rightChannelData[i]))
+                {
+                    rightBlockMax = std::abs(rightChannelData[i]);
+                }
             }
             
-            switch (mode) {
-                case Mode::DYNAMIC_RANGE:
-                    
-                    {
-//                        float leftChannelFiltered = hs_a_0 * leftChannelData[i] + hs_a_1 * x_1 + hs_a_2 * x_2 - hs_b_1 * y_1 - hs_b_2 * y_2;
-                        float leftChannelFiltered = highShelfLeft.doBiQuad(leftChannelData[i]);
-                        float rightChannelFiltered = highShelfRight.doBiQuad(rightChannelData[i]);
-                        leftChannelFiltered = highPassLeft.doBiQuad(leftChannelFiltered);
-                        rightChannelFiltered = highPassRight.doBiQuad(rightChannelFiltered);
-                        
-                        leftLUFSEnergyFiltered += (leftChannelFiltered * leftChannelFiltered);
-                        rightLUFSEnergyFiltered += (rightChannelFiltered * rightChannelFiltered);
-
-                        lufsMomentaryLoudnessBlockEnergy += (leftChannelFiltered * leftChannelFiltered) + (rightChannelFiltered * rightChannelFiltered);
-                        
-                        // We have moved ahead by 100ms, now get the gating block loudness.
-                        if (sampleCount == lufsMomentaryLoudnessSampleCount / 4) {
- 
-                            // Park this sum for the UI thread to use.
-                            lufsMomentaryLoudnessBlockEnergySafe = lufsMomentaryLoudnessBlockEnergy;
-                            
-                            // Reset
-                            lufsMomentaryLoudnessBlockEnergy = 0;
-                            sampleCount = 0;
-                            
-                            sendActionMessage(LUFS_MESSAGE);
-                            
-                        }
-                        
-                        sampleCount++;
-                    }
-                    
-                    break;
-                    
-                    case Mode::BASS_SPACE:
-                    {
-                        // ************ Bass space ************
-                        
-                        // Apply Linkwitz-Riley filter
-                        
-                        // Apply filter to left channel: y(n) = a0 * x(n) + a1 * x(n-1) + a2 * x(n-2) - b1 * y(n-1) - b2 * y(n-2).
-//                        float leftChannelFiltered = a_0 * leftChannelData[i] + a_1 * x_1 + a_2 * x_2 - b_1 * y_1 - b_2 * y_2;
-                        float leftChannelFiltered = linkwitzRiley.doBiQuad(leftChannelData[i] );
-                     
-                        leftEnergyFiltered += (leftChannelFiltered * leftChannelFiltered);
-                    }
-                    
-                    break;
-                    
-                default:
-                    break;
-            }
-            
-        }
-    }
-    
-    // Calculate RMS
-    leftRMS = sqrtf(leftEnergy / numSamples);
-    rightRMS = sqrtf(rightEnergy / numSamples);
-    
-    // For the filtered RMS.
-    leftRMSFiltered = sqrtf(leftEnergyFiltered / numSamples);
-    
-    // Calculate average abs sample value for this block
-    float blockAverageRMS = (leftRMS + rightRMS) / 2;
-    
-    // Again, see Proakis.
-    if (leftEnergy == 0 || rightEnergy == 0)
-    {
-        stereoCorrelation = 0;
-    } else
-    {
-        stereoCorrelation = Rxy0/(sqrtf(leftEnergy * rightEnergy));
-    }
-    
-    if (dynamicRangeCounter < 100)
-    {
-        // Use this value to get dB, i.e. 20log(blockMax/blockAverage).
-        if (blockAverageRMS == 0)
-        {
-            blockAverageRMS = 0.001;
-        }
-        if (leftBlockMax == 0)
-        {
-            leftBlockMax = 0.001;
-        }
-        if (rightBlockMax == 0)
-        {
-            rightBlockMax = 0.001;
-        }
-        
-
-        dynamicRangeMax[dynamicRangeCounter] = std::max(leftBlockMax, rightBlockMax);
-        dynamicRangeAvg[dynamicRangeCounter] = blockAverageRMS;
-        
-      
-        
-    } else
-    {
-        // Notify the editor to check the average value of dynamicRange.
-        sendActionMessage(DYNAMIC_RANGE_MESSAGE);
-        dynamicRangeCounter = 0;
-    }
-    
-    if (bassSpaceCounter < 100 )
-    {
-        // Also check blockSize as it may vary, rendering the FFT confused!
-        if (fftDataReady && (blockSize == numSamples))
-        {
-            // We have a full fft buffer so we have fft data.
-            
-            // For bass space. Get first four bins (after DC).
-            for (int i = 0; i < 4; i++) {
+            if (mode == UIConstants::Mode::STEREO)
+            {
+                // ************ Cross correlation ************
                 
-                // Get the amplitude in dB.
-                std::complex<float> val(((FFT::Complex*)forwardLeftFFTData.get())[i+1].r, ((FFT::Complex*)forwardLeftFFTData.get()  )[i+1].i);
-                binAmplitudes[i][bassSpaceCounter] = 20 * log10(std::abs(val) / (float(fftSize) / 2.)) ;
-
+                /*
+                 Cross correlation between l and r is Rxy(0) = Sum (x(n) * y(n)) (left = x, right = y).
+                 Normalised to (-1, 1) is Rxy(0) / Sqrt(Rxx(0) Ryy(0)).
+                 e.g. see p 114-116 Ch.2 DSP Proakis/Manolakis 2nd Edition.
+                 */
+                
+                Rxy0 += leftChannelData[i] * rightChannelData[i];
+                
+            }
+                
+            if (mode == UIConstants::Mode::BASS_SPACE)
+            {
+                // ************ Bass space ************
+                
+                // Apply Linkwitz-Riley filter
+                
+                // Apply filter to left channel: y(n) = a0 * x(n) + a1 * x(n-1) + a2 * x(n-2) - b1 * y(n-1) - b2 * y(n-2).
+//                  float leftChannelFiltered = a_0 * leftChannelData[i] + a_1 * x_1 + a_2 * x_2 - b_1 * y_1 - b_2 * y_2;
+                float leftChannelFiltered = linkwitzRiley.doBiQuad(leftChannelData[i] );
+             
+                leftEnergyFiltered += (leftChannelFiltered * leftChannelFiltered);
             }
             
-            // Also hold the leftRMSFiltered to use to 'normalise' the bass dB.
-            leftRMSFilteredAverage[bassSpaceCounter] = leftRMSFiltered;
             
-            bassSpaceCounter++;
         }
-        
-    } else
-    {
-        // Notify the editor to check the average value of bass space.
-        sendActionMessage(BASS_SPACE_MESSAGE);
-        bassSpaceCounter = 0;
     }
     
+    if (mode == UIConstants::Mode::HEADROOM)
+    {
+        // Calculate RMS
+        leftRMS = sqrtf(leftEnergy / numSamples);
+        rightRMS = sqrtf(rightEnergy / numSamples);
+    }
+    
+    if (mode == UIConstants::Mode::DYNAMIC_RANGE)
+    {
+        // Calculate RMS
+        leftRMS = sqrtf(leftEnergy / numSamples);
+        rightRMS = sqrtf(rightEnergy / numSamples);
+        
+        // Calculate average abs sample value for this block
+        float blockAverageRMS = (leftRMS + rightRMS) / 2;
+        
+        if (dynamicRangeCounter < 10)
+        {
+            // Use this value to get dB, i.e. 20log(blockMax/blockAverage).
+            if (blockAverageRMS == 0)
+            {
+                blockAverageRMS = 0.001;
+            }
+            if (leftBlockMax == 0)
+            {
+                leftBlockMax = 0.001;
+            }
+            if (rightBlockMax == 0)
+            {
+                rightBlockMax = 0.001;
+            }
+            
+            
+            dynamicRangeMax[dynamicRangeCounter] = std::max(leftBlockMax, rightBlockMax);
+            dynamicRangeAvg[dynamicRangeCounter] = blockAverageRMS;
+            
+            dynamicRangeCounter++;
+            
+        } else
+        {
+            // Notify the editor to check the average value of dynamicRange.
+//            sendActionMessage(UIConstants::DYNAMIC_RANGE_MESSAGE);
+            dynamicRangeCounter = 0;
+        }
+    }
+    
+    if (mode == UIConstants::Mode::STEREO)
+    {
+        // Again, see Proakis.
+        if (leftEnergy == 0 || rightEnergy == 0)
+        {
+            stereoCorrelation = 0;
+        } else
+        {
+            stereoCorrelation = Rxy0/(sqrtf(leftEnergy * rightEnergy));
+        }
+    }
+    
+    if (mode == UIConstants::Mode::BASS_SPACE)
+    {
+        // For the filtered RMS.
+        leftRMSFiltered = sqrtf(leftEnergyFiltered / numSamples);
+        
+        if (bassSpaceCounter < 100 )
+        {
+            // Also check blockSize as it may vary, rendering the FFT confused!
+            if (fftDataReady && (blockSize == numSamples))
+            {
+                // We have a full fft buffer so we have fft data.
+                
+                // For bass space. Get first four bins (after DC).
+                for (int i = 0; i < 4; i++) {
+                    
+                    // Get the amplitude in dB.
+                    std::complex<float> val(((FFT::Complex*)forwardLeftFFTData.get())[i+1].r, ((FFT::Complex*)forwardLeftFFTData.get()  )[i+1].i);
+                    binAmplitudes[i][bassSpaceCounter] = 20 * log10(std::abs(val) / (float(fftSize) / 2.)) ;
+                    
+                }
+                
+                // Also hold the leftRMSFiltered to use to 'normalise' the bass dB.
+                leftRMSFilteredAverage[bassSpaceCounter] = leftRMSFiltered;
+                
+                bassSpaceCounter++;
+            }
+            
+        } else
+        {
+            // Notify the editor to check the average value of bass space.
+            sendActionMessage(UIConstants::BASS_SPACE_MESSAGE);
+            bassSpaceCounter = 0;
+        }
+    }
+
     
     // ask the host for the current time.
     AudioPlayHead::CurrentPositionInfo newTime;
@@ -528,7 +546,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
         lastPosInfo.resetToDefault();
     }
 
-    dynamicRangeCounter++;
+    
     
     
 }

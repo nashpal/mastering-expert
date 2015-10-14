@@ -28,7 +28,7 @@ public:
     void resized();
     
    
-    void setCurrentPointArray(std::array<juce::Point<float> , NUMBER_VECTOR_POINTS>);
+    void setCurrentPointArray(std::array<juce::Point<float> , UIConstants::NUMBER_SCOPE_POINTS>);
     
     // Radius if this a polar sample vectorscope.
     float radius;
@@ -39,9 +39,9 @@ private:
     void normalisePoints();
     
     // An array of 5 arrays of Point arrays!
-    std::array<std::array<juce::Point<float> , NUMBER_VECTOR_POINTS>, NUMBER_VECTOR_BUFFERS> allPoints { { juce::Point<float>(0,0) } };
+    std::array<std::array<juce::Point<float> , UIConstants::NUMBER_SCOPE_POINTS>, UIConstants::NUMBER_SCOPE_BUFFERS> allPoints { { juce::Point<float>(0,0) } };
     
-    // Which points are the lates to display.
+    // Which points are the latest to display.
     int currentPointsIndex = 0;
     
     Path logoPath;

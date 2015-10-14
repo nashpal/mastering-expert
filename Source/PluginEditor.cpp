@@ -22,7 +22,8 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
         monoButton("Mono"),
         leftLevel("","",""),
         rightLevel("-inf", "-6dB", "0db"),
-        dynamicHeadroomLevel("0db", "10dB", "20db"),
+        dynamicRangeLeftLevel("", "", ""),
+        dynamicRangeRightLevel("0db", "10dB", "20db"),
         stereoCorrelationLevel("-1", "0", "+1"),
         bassSpaceLabel("", "Bass Space: soon!"),
         hyperLink("Get it mastered at Mastering The Mix", URL ("http://www.masteringthemix.com"))
@@ -35,6 +36,8 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     vectorScope.radius = 75;
 //    addAndMakeVisible(vectorScope);
     addChildComponent(vectorScope);
+    
+    addChildComponent(oscilloScope);
     
     headroomBreachedLabel.setJustificationType(juce::Justification::left);
     headroomBreachedLabel.setFont (Font (15.0f));
@@ -126,18 +129,32 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addChildComponent(rightLevel);
     
     
-    dynamicHeadroomLevel.barCount = 20;
-    dynamicHeadroomLevel.barWidth = 16;
-    dynamicHeadroomLevel.minValue = 0;
-    dynamicHeadroomLevel.maxValue = 20;
-    dynamicHeadroomLevel.overBar = 11;
-    dynamicHeadroomLevel.step = 2;
-    dynamicHeadroomLevel.overColour = Colours::red;
-    dynamicHeadroomLevel.underColour = Colours::green;
-    dynamicHeadroomLevel.barColour = Colours::black;
-    dynamicHeadroomLevel.meterType = MeterType::DYNAMICRANGE;
+    dynamicRangeLeftLevel.barCount = 20;
+    dynamicRangeLeftLevel.barWidth = 16;
+    dynamicRangeLeftLevel.minValue = 0;
+    dynamicRangeLeftLevel.maxValue = 20;
+    dynamicRangeLeftLevel.overBar = 11;
+    dynamicRangeLeftLevel.step = 2;
+    dynamicRangeLeftLevel.overColour = Colours::red;
+    dynamicRangeLeftLevel.underColour = Colours::green;
+    dynamicRangeLeftLevel.barColour = Colours::black;
+    dynamicRangeLeftLevel.meterType = MeterType::DYNAMICRANGE;
 //    addAndMakeVisible(dynamicHeadroomLevel);
-    addChildComponent(dynamicHeadroomLevel);
+    addChildComponent(dynamicRangeLeftLevel);
+    
+    dynamicRangeRightLevel.barCount = 20;
+    dynamicRangeRightLevel.barWidth = 16;
+    dynamicRangeRightLevel.minValue = 0;
+    dynamicRangeRightLevel.maxValue = 20;
+    dynamicRangeRightLevel.overBar = 11;
+    dynamicRangeRightLevel.step = 2;
+    dynamicRangeRightLevel.overColour = Colours::red;
+    dynamicRangeRightLevel.underColour = Colours::green;
+    dynamicRangeRightLevel.barColour = Colours::black;
+    dynamicRangeRightLevel.meterType = MeterType::DYNAMICRANGE;
+    //    addAndMakeVisible(dynamicHeadroomLevel);
+    addChildComponent(dynamicRangeRightLevel);
+    
     
     stereoCorrelationLevel.barCount = 20;
     stereoCorrelationLevel.barWidth = 16;
@@ -186,7 +203,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     // Fill this with effectively silence.
     lufsShortTermLoudness.fill(-140);
     
-    startTimer (20);
+    startTimer (40);
 }
 
 TestPluginAudioProcessorEditor::~TestPluginAudioProcessorEditor()
@@ -210,8 +227,10 @@ void TestPluginAudioProcessorEditor::resized()
     // subcomponents in your editor..
     
     logo.setBounds(0, 0, 540, 200);
+    
     vectorScope.setBounds(550, 0, 192, 286);
     
+    oscilloScope.setBounds(550, 0, 192, 286);
     
     leftLevel.setBounds(5, 150, 16, 100);
     rightLevel.setBounds(23, 150, 50, 100);
@@ -220,8 +239,9 @@ void TestPluginAudioProcessorEditor::resized()
     lufsShortTermLoudnessLabel.setBounds(5, 365, 200, 40);
     
     dynamicRangeLabel.setBounds(205, 350, 200, 40);
-    dynamicHeadroomLevel.setBounds(205, 250, 50, 100);
-    
+    dynamicRangeLeftLevel.setBounds(205, 250, 50, 100);
+    dynamicRangeRightLevel.setBounds(255, 250, 50, 100);
+
     stereoCorrelationLabel.setBounds(405, 350, 200, 40);
     stereoCorrelationLevel.setBounds(405, 250, 50, 100);
     
@@ -274,7 +294,9 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         lufsMomentaryLoudnessLabel.setVisible(true);
         lufsShortTermLoudnessLabel.setVisible(true);
 
- 
+        mode = UIConstants::Mode::HEADROOM;
+        
+        getProcessor().mode = mode;
     }
     
     if (button == &dynamicRangeButton)
@@ -282,8 +304,14 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         this->hideComponents();
         this->showComponents();
         
-        dynamicHeadroomLevel.setVisible(true);
+        dynamicRangeLeftLevel.setVisible(true);
+        dynamicRangeRightLevel.setVisible(true);
         dynamicRangeLabel.setVisible(true);
+        oscilloScope.setVisible(true);
+        
+        mode = UIConstants::Mode::DYNAMIC_RANGE;
+        
+        getProcessor().mode = mode;
 
     }
     
@@ -294,6 +322,10 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         
         stereoCorrelationLevel.setVisible(true);
         vectorScope.setVisible(true);
+        
+        mode = UIConstants::Mode::STEREO;
+        
+        getProcessor().mode = mode;
 
     }
     
@@ -306,6 +338,10 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         freq2Label.setVisible(true);
         freq3Label.setVisible(true);
         freq4Label.setVisible(true);
+        
+        mode = UIConstants::Mode::BASS_SPACE;
+        
+        getProcessor().mode = mode;
 
     }
     
@@ -315,6 +351,10 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         this->showComponents();
         
         logo.setVisible(true);
+        
+        mode = UIConstants::Mode::HOME;
+        
+        getProcessor().mode = mode;
     }
     
 }
@@ -326,48 +366,104 @@ void TestPluginAudioProcessorEditor::timerCallback()
     
     if (processor.lastPosInfo.isPlaying)
     {
-        vectosScopeFadeoutCount = 0;
+        scopeFadeoutCount = 0;
         
-        logo.setFFTBins(processor.logoFFTBins);
-        logo.repaint();
-        
-        leftLevel.levelData = processor.leftBlockMax; //processor.leftRMS;
-        rightLevel.levelData = processor.rightBlockMax; //rightRMS;
-        leftLevel.repaint();
-        rightLevel.repaint();
-        
-        if (processor.headroomBreached)
+        if (mode == UIConstants::Mode::HOME)
         {
-            headroomBreachedLabel.setText("Headroom: Breached", dontSendNotification);
+            logo.setFFTBins(processor.logoFFTBins);
+            logo.repaint();
         }
         
-        stereoCorrelationLevel.levelData = processor.stereoCorrelation + 1;
-        stereoCorrelationLevel.repaint();
-        stereoCorrelationLabel.setText("Stereo Correlation: " + String(processor.stereoCorrelation, 2), dontSendNotification);
+        if (mode == UIConstants::Mode::HEADROOM)
+        {
+            leftLevel.levelData = processor.leftRMS; //processor.leftRMS;
+            rightLevel.levelData = processor.rightRMS; //rightRMS;
+            leftLevel.repaint();
+            rightLevel.repaint();
+            
+            if (processor.headroomBreached)
+            {
+                headroomBreachedLabel.setText("Headroom: Breached", dontSendNotification);
+            }
+        }
         
-        vectorScope.setCurrentPointArray(processor.vectorScopePoints);
-        vectorScope.repaint();
+        if (mode == UIConstants::Mode::STEREO)
+        {
+            stereoCorrelationLevel.levelData = processor.stereoCorrelation + 1;
+            stereoCorrelationLevel.repaint();
+            stereoCorrelationLabel.setText("Stereo Correlation: " + String(processor.stereoCorrelation, 2), dontSendNotification);
+            
+            vectorScope.setCurrentPointArray(processor.scopePoints);
+            vectorScope.repaint();
+        }
         
-        
+        if (mode == UIConstants::Mode::DYNAMIC_RANGE)
+        {
+            dynamicRangeLeftPeaks[dynamicRangeBlockCount % 30] = processor.leftBlockMax;
+            dynamicRangeRightPeaks[dynamicRangeBlockCount % 30] = processor.rightBlockMax;
+            
+            dynamicRangeLeftRMS[dynamicRangeBlockCount % 30] = processor.leftRMS;
+            dynamicRangeRightRMS[dynamicRangeBlockCount % 30] = processor.rightRMS;
+            
+            float leftPeakAverage = std::accumulate(dynamicRangeLeftPeaks.begin(), dynamicRangeLeftPeaks.end(), 0.0) / 30.0;
+            float rightPeakAverage = std::accumulate(dynamicRangeRightPeaks.begin(), dynamicRangeRightPeaks.end(), 0.0) / 30.0;
+            
+            float dynamicRangeLeftRMSAverage = std::accumulate(dynamicRangeLeftRMS.begin(), dynamicRangeLeftRMS.end(), 0.0) / 30.0;
+            float dynamicRangeRightRMSAverage = std::accumulate(dynamicRangeRightRMS.begin(), dynamicRangeRightRMS.end(), 0.0) / 30.0;
+            
+            dynamicRangeLeftLevel.levelData = 20 * log10f(leftPeakAverage - dynamicRangeLeftRMSAverage);
+            dynamicRangeLeftLevel.repaint();
+            
+            dynamicRangeRightLevel.levelData = 20 * log10f(rightPeakAverage - dynamicRangeRightRMSAverage);
+            dynamicRangeRightLevel.repaint();
+            
+            dynamicRangeLabel.setText("Dynamic Range L:" + String(dynamicRangeLeftLevel.levelData, 1) + "dB" + " R:" + String(dynamicRangeRightLevel.levelData, 1) + "dB", dontSendNotification);
+            
+            oscilloScope.setCurrentPointArray(processor.scopePoints);
+            oscilloScope.repaint();
+            
+            dynamicRangeBlockCount++;
+        }
+
         
     } else
     {
         
-        if (vectosScopeFadeoutCount < NUMBER_VECTOR_BUFFERS)
+        if (mode == UIConstants::Mode::DYNAMIC_RANGE)
         {
-            // Seems like we have just stopped playing so fade out vectorscope.
-            vectorScope.setCurrentPointArray(std::array<juce::Point<float>, 100>{ juce::Point<float>(0,0) });
-            vectosScopeFadeoutCount++;
-            
-            vectorScope.repaint();
+            if (scopeFadeoutCount < UIConstants::NUMBER_SCOPE_BUFFERS)
+            {
+                // Seems like we have just stopped playing so fade out scope.
+                oscilloScope.setCurrentPointArray(std::array<juce::Point<float>, UIConstants::NUMBER_SCOPE_POINTS>{ juce::Point<float>(0,0) });
+                scopeFadeoutCount++;
+
+                oscilloScope.repaint();
+            }
         }
         
-        // Reset the logo
-        logo.setFFTBins({ 10, 20, 30, 40, 40, 30, 20, 10 });
+        if (mode == UIConstants::Mode::STEREO)
+        {
+            if (scopeFadeoutCount < UIConstants::NUMBER_SCOPE_BUFFERS)
+            {
+                // Seems like we have just stopped playing so fade out vectorscope.
+                vectorScope.setCurrentPointArray(std::array<juce::Point<float>, UIConstants::NUMBER_SCOPE_POINTS>{ juce::Point<float>(0,0) });
+                scopeFadeoutCount++;
+                
+                vectorScope.repaint();
+            }
+        }
         
-        logo.repaint();
+        
+        
+        if (mode == UIConstants::Mode::HOME)
+        {
+            // Reset the logo
+            logo.setFFTBins({ 10, 20, 30, 40, 40, 30, 20, 10 });
+            logo.repaint();
+        }
         
         lufsBlockCount = 0;
+        dynamicRangeBlockCount = 0;
     }
 }
 
@@ -376,7 +472,7 @@ void TestPluginAudioProcessorEditor::actionListenerCallback(const String& messag
     
     TestPluginAudioProcessor& processor = getProcessor();
     
-    if (message == LUFS_MESSAGE)
+    if (message == UIConstants::LUFS_MESSAGE)
     {
         float momentaryLoudnessEnergySum = 0;
         float shortTermLoudnessEnergySum = 0;
@@ -406,6 +502,7 @@ void TestPluginAudioProcessorEditor::actionListenerCallback(const String& messag
          
          */
         
+        /*
         // Get vector of short term loudness levels.
         lufsShortTermLoudness[lufsBlockCount % 30] = lufs;
         
@@ -457,27 +554,28 @@ void TestPluginAudioProcessorEditor::actionListenerCallback(const String& messag
         lufsAbsoluteGated.clear();
         lufsRelativeGated.clear();
         lufsLogRemoved.clear();
+
+         */
         
         lufsBlockCount++;
-        
     }
     
-    if (message == DYNAMIC_RANGE_MESSAGE)
+    if (message == UIConstants::DYNAMIC_RANGE_MESSAGE)
     {
         // We have been notified to check the dynamicRange array.
 
         // Get the average of the dynamicRange, note this is still being changed by the audio thread,
         // but this is only a heuristic method anyway.
-        float averageDynamicRange = std::accumulate(processor.dynamicRangeAvg.begin(), processor.dynamicRangeAvg.end(), 0.0) / 100;
+        float averageDynamicRange = std::accumulate(processor.dynamicRangeAvg.begin(), processor.dynamicRangeAvg.end(), 0.0) / 10;
         float maxDynamicRange = *std::max_element(processor.dynamicRangeMax.begin(), processor.dynamicRangeMax.end());
 
-        dynamicHeadroomLevel.levelData = 20 * log10f(maxDynamicRange / averageDynamicRange);
-        dynamicHeadroomLevel.repaint();
+        dynamicRangeLeftLevel.levelData = 20 * log10f(maxDynamicRange / averageDynamicRange);
+        dynamicRangeLeftLevel.repaint();
 
-//        dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange), 2) + "dB", dontSendNotification);
+        dynamicRangeLabel.setText("Dynamic Range: " + String(20 * log10f(maxDynamicRange / averageDynamicRange), 2) + "dB", dontSendNotification);
     }
     
-    if (message == BASS_SPACE_MESSAGE)
+    if (message == UIConstants::BASS_SPACE_MESSAGE)
     {
         float averageFilteredRMSdB = 20 * log10f(std::accumulate(processor.leftRMSFilteredAverage.begin(), processor.leftRMSFilteredAverage.end(), 0.0) / 100);
         float averageBinLeveldB = std::accumulate(processor.binAmplitudes[0].begin(), processor.binAmplitudes[0].end(), 0.0) / 100;

@@ -286,6 +286,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\Oscilloscope.cpp">
+      <Filter>MasteringExpert</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\Source\LevelMeter.cpp">
       <Filter>MasteringExpert</Filter>
     </ClCompile>
@@ -1482,6 +1485,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Oscilloscope.h">
+      <Filter>MasteringExpert</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\BiQuad.h">
       <Filter>MasteringExpert</Filter>
     </ClInclude>

@@ -15,7 +15,9 @@
 #include "PluginProcessor.h"
 #include "EmbeddedImage.h"
 #include "VectorScope.h"
+#include "Oscilloscope.h"
 #include "LevelMeter.h"
+#include "Settings.h"
 
 //==============================================================================
 /**
@@ -52,6 +54,7 @@ private:
     
     EmbeddedImage logo;
     VectorScope vectorScope;
+    Oscilloscope oscilloScope;
     
     Label headroomBreachedLabel;
     Label lufsMomentaryLoudnessLabel;
@@ -72,7 +75,9 @@ private:
     
     LevelMeter leftLevel;
     LevelMeter rightLevel;
-    LevelMeter dynamicHeadroomLevel;
+    LevelMeter dynamicRangeLeftLevel;
+    LevelMeter dynamicRangeRightLevel;
+    
     LevelMeter stereoCorrelationLevel;
     
     Label freq1Label;
@@ -84,8 +89,8 @@ private:
     
     HyperlinkButton hyperLink;
     
-    // Need to fade out vector scope if play has stopped.
-    int vectosScopeFadeoutCount = 0;
+    // Need to fade out 'scopes if play has stopped.
+    int scopeFadeoutCount = 0;
     
     TestPluginAudioProcessor& getProcessor() const
     {
@@ -102,6 +107,16 @@ private:
     // Hold a vector of short term loudness values to calculate the Loudness Range.
     std::array<float, 100> lufsShortTermLoudness;
     
+    int dynamicRangeBlockCount = 0;
+    
+    // Hold a vector of 30 most recent left/right peaks for dynamic range calc.
+    std::array<float, 30> dynamicRangeLeftPeaks;
+    std::array<float, 30> dynamicRangeRightPeaks;
+    
+    // Hold a vector of 30 most recent left/right RMS for dynamic range calc.
+    std::array<float, 30> dynamicRangeLeftRMS;
+    std::array<float, 30> dynamicRangeRightRMS;
+    
     // Resizable array of lufs short term loudness values that are > LUFS_ABSOLUTE_TRESHOLD and < LUFS_RELATIVE_THRESHOLD
     std::vector<float> lufsAbsoluteGated;
     
@@ -115,6 +130,8 @@ private:
     const float LUFS_RELATIVE_THRESHOLD = -20;
     const float LUFS_LOWER_PERCENTILE = 10;
     const float LUFS_UPPER_PERCENTILE = 95;
+    
+    UIConstants::Mode mode = UIConstants::Mode::DYNAMIC_RANGE;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TestPluginAudioProcessorEditor)
 };
