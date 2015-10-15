@@ -15,6 +15,7 @@
 //==============================================================================
 TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioProcessor& p)
     :   AudioProcessorEditor (p),
+        vectorScope(VectorScope::Mode::LISSAJOUS),
         headroomBreachedLabel("", "Headroom: OK"),
         dynamicRangeLabel("", "Dynamic Range: 0dB"),
         stereoCorrelationLabel("", "Stereo Correlation: 0"),
@@ -128,7 +129,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     dynamicRangeLeftLevel.barCount = 20;
     dynamicRangeLeftLevel.barWidth = 16;
     dynamicRangeLeftLevel.minValue = 0;
-    dynamicRangeLeftLevel.maxValue = 20;
+    dynamicRangeLeftLevel.maxValue = 1;
     dynamicRangeLeftLevel.overBar = 11;
     dynamicRangeLeftLevel.step = 2;
     dynamicRangeLeftLevel.overColour = Colours::red;
@@ -140,7 +141,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     dynamicRangeRightLevel.barCount = 20;
     dynamicRangeRightLevel.barWidth = 16;
     dynamicRangeRightLevel.minValue = 0;
-    dynamicRangeRightLevel.maxValue = 20;
+    dynamicRangeRightLevel.maxValue = 1;
     dynamicRangeRightLevel.overBar = 11;
     dynamicRangeRightLevel.step = 2;
     dynamicRangeRightLevel.overColour = Colours::red;
@@ -408,13 +409,13 @@ void TestPluginAudioProcessorEditor::timerCallback()
             float dynamicRangeLeftRMSAverage = std::accumulate(dynamicRangeLeftRMS.begin(), dynamicRangeLeftRMS.end(), 0.0) / 30.0;
             float dynamicRangeRightRMSAverage = std::accumulate(dynamicRangeRightRMS.begin(), dynamicRangeRightRMS.end(), 0.0) / 30.0;
             
-            dynamicRangeLeftLevel.levelData = leftPeakAverage - dynamicRangeLeftRMSAverage;
+            dynamicRangeLeftLevel.levelData = dynamicRangeLeftRMSAverage / leftPeakAverage;
             dynamicRangeLeftLevel.repaint();
             
-            dynamicRangeRightLevel.levelData = rightPeakAverage - dynamicRangeRightRMSAverage;
+            dynamicRangeRightLevel.levelData = dynamicRangeRightRMSAverage / rightPeakAverage ;
             dynamicRangeRightLevel.repaint();
             
-            dynamicRangeLabel.setText("Dynamic Range L:" + String(20 * log10f(leftPeakAverage - dynamicRangeLeftRMSAverage), 1) + "dB" + " R:" + String(20 * log10f(rightPeakAverage - dynamicRangeRightRMSAverage), 1) + "dB", dontSendNotification);
+            dynamicRangeLabel.setText("Dynamic Range L:" + String(-20 * log10f(dynamicRangeLeftRMSAverage / leftPeakAverage), 1) + "dB" + " R:" + String(-20 * log10f(dynamicRangeRightRMSAverage / rightPeakAverage), 1) + "dB", dontSendNotification);
             
             oscilloScope.setCurrentPointArray(processor.scopePoints);
             oscilloScope.repaint();

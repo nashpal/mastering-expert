@@ -123,7 +123,7 @@ static const unsigned char pathData[] = { 110,109,143,226,119,67,72,65,197,67,10
     101,0,0 };
 
 //==============================================================================
-VectorScope::VectorScope ()
+VectorScope::VectorScope (Mode mode) : mode(mode)
 {
     // TODO: Is this the best place to load?
     logoPath.loadPathFromData (pathData, sizeof (pathData));
@@ -151,60 +151,18 @@ void VectorScope::paint (Graphics& g)
     Rectangle<float> rect = logoPath.getBounds();
     Rectangle<int> rect2 = getLocalBounds();
     
-    g.setColour (Colours::black);
-    g.fillPath (logoPath, RectanglePlacement (RectanglePlacement::stretchToFit)
-                .getTransformToFit (logoPath.getBounds(),
-                                    getLocalBounds().toFloat()));
+//    g.setColour (Colours::black);
+//    g.fillPath (logoPath, RectanglePlacement (RectanglePlacement::stretchToFit)
+//                .getTransformToFit (logoPath.getBounds(),
+//                                    getLocalBounds().toFloat()));
 
 
-    // Arc
-
-    path.addCentredArc(radius + xOffset, radius + yOffset, radius, radius, 0, -M_PI_2, M_PI_2, true);
-    g.setColour (Colours::lightgrey);
-    g.strokePath (path, PathStrokeType(1.));
-
-    path.clear();
-
-    // Horizontal line
-    path.addLineSegment(Line<float> (xOffset, radius + yOffset, radius * 2 + xOffset, radius  + yOffset), 1.);
-
-    // Diagonal lines
-    path.addLineSegment(Line<float> (radius + xOffset, radius + yOffset, radius + radius * cosf(M_PI_4) + xOffset, radius + yOffset -radius * sinf(M_PI_4)), 1.);
-    path.addLineSegment(Line<float> (radius + xOffset, radius + yOffset, radius + xOffset - radius * cosf(M_PI_4), radius + yOffset -radius * sinf(M_PI_4)), 1.);
-    g.setColour (Colours::lightgrey);
-    g.fillPath (path);
+    this->drawScope(g, path, xOffset, yOffset);
 
     Path vectorScopePath;
 
-    // Now iterate over points.
-    int count = 0;
-    float alpha = 0;
-    for (auto& points : allPoints)
-    {
-        if ((currentPointsIndex - count + UIConstants::NUMBER_SCOPE_BUFFERS) % UIConstants::NUMBER_SCOPE_BUFFERS == 0)
-        {
-            // Current array is 'brightest'
-            alpha = 1;
-        } else
-        {
-            // Set older immediately to less than 0.5 alpha.
-            alpha = 0.3 - ((currentPointsIndex - count + UIConstants::NUMBER_SCOPE_BUFFERS) % UIConstants::NUMBER_SCOPE_BUFFERS) * 0.015 ;
-        }
-        
-        g.setColour(Colour::fromFloatRGBA(0, 0 , 0, alpha)) ;
-        
-        for (auto& point : points)
-        {
-            float temp = point.x;
-//            jassert(temp < 1.1);
-            g.setPixel(radius + xOffset + point.x * radius, radius + yOffset - point.y * radius );
-        }
-        count++;
+    this->drawPoints(g, xOffset, yOffset);
 
-    }
-    
-
-    
 }
 
 void VectorScope::resized()
@@ -216,6 +174,104 @@ void VectorScope::resized()
     //[/UserResized]
 }
 
+void VectorScope::drawScope(Graphics& g, Path& path, float xOffset, float yOffset)
+{
+    switch (mode) {
+        case Mode::POLAR:
+            
+        {
+            path.addCentredArc(radius + xOffset, radius + yOffset, radius, radius, 0, -M_PI_2, M_PI_2, true);
+            g.setColour (Colours::lightgrey);
+            g.strokePath (path, PathStrokeType(1.));
+            
+            path.clear();
+            
+            // Horizontal line
+            path.addLineSegment(Line<float> (xOffset, radius + yOffset, radius * 2 + xOffset, radius  + yOffset), 1.);
+            
+            // Diagonal lines
+            path.addLineSegment(Line<float> (radius + xOffset, radius + yOffset, radius + radius * cosf(M_PI_4) + xOffset, radius + yOffset -radius * sinf(M_PI_4)), 1.);
+            path.addLineSegment(Line<float> (radius + xOffset, radius + yOffset, radius + xOffset - radius * cosf(M_PI_4), radius + yOffset -radius * sinf(M_PI_4)), 1.);
+            g.setColour (Colours::lightgrey);
+            g.fillPath (path);
+        }
+            break;
+            
+        case Mode::LISSAJOUS:
+            
+            float squareWidth = radius / M_SQRT1_2;
+            float squareWidthBy2 = squareWidth / 2.f;
+            
+            juce::Point<float> centre;
+            centre.x = xOffset + radius;
+            centre.y = yOffset + radius;
+            
+            // Draw a rectangle with grids then rotate.
+//            path.addRectangle(xOffset, yOffset, 2 * radius, 2 * radius);
+            
+            // Horizontal grid.
+            path.addLineSegment(Line<float> (xOffset, radius + yOffset, radius * 2 + xOffset, radius  + yOffset), 1.);
+            
+            // Vertical grid.
+            path.addLineSegment(Line<float>(radius + xOffset, radius * 2 + yOffset, radius + xOffset, yOffset), 1.);
+            
+            g.addTransform(AffineTransform::rotation(-M_PI / 4, centre.x, centre.y));
+            
+            g.setColour (Colours::lightgrey);
+            g.fillPath (path);
+            
+
+            break;
+    }
+    
+}
+
+void VectorScope::drawPoints(Graphics& g, float xOffset, float yOffset)
+{
+
+            // Now iterate over points.
+            int count = 0;
+            float alpha = 0;
+            for (auto& points : allPoints)
+            {
+                if ((currentPointsIndex - count + UIConstants::NUMBER_SCOPE_BUFFERS) % UIConstants::NUMBER_SCOPE_BUFFERS == 0)
+                {
+                    // Current array is 'brightest'
+                    alpha = 1;
+                } else
+                {
+                    // Set older immediately to less than 0.5 alpha.
+                    alpha = 0.3 - ((currentPointsIndex - count + UIConstants::NUMBER_SCOPE_BUFFERS) % UIConstants::NUMBER_SCOPE_BUFFERS) * 0.015 ;
+                }
+                
+                g.setColour(Colour::fromFloatRGBA(0, 0 , 0, alpha)) ;
+                
+                for (auto& point : points)
+                {
+                    switch (mode) {
+                            
+                        case Mode::POLAR:
+                        {
+                            g.setPixel(radius + xOffset + point.x * radius, radius + yOffset - point.y * radius );
+                        }
+                            break;
+                            
+                        case Mode::LISSAJOUS:
+                        {
+                            // Note right is in x and left is in y (usefule for polar)
+//                            jassert(point.x < 1);
+                            g.setPixel(radius + xOffset + point.x * radius, radius + yOffset - point.y * radius );
+                        }
+                            
+                            break;
+                    }
+
+                }
+                count++;
+                
+            }
+       }
+
 void VectorScope::setCurrentPointArray(std::array<juce::Point<float>, UIConstants::NUMBER_SCOPE_POINTS> currentPoints)
 {
 
@@ -226,46 +282,82 @@ void VectorScope::setCurrentPointArray(std::array<juce::Point<float>, UIConstant
 
 void VectorScope::normalisePoints()
 {
-    std::array<float, UIConstants::NUMBER_SCOPE_POINTS> args;
-    std::array<float, UIConstants::NUMBER_SCOPE_POINTS> mags;
-    int count= 0;
+    
+    switch (mode) {
+            
+        case Mode::POLAR:
+        {
+            
+            std::array<float, UIConstants::NUMBER_SCOPE_POINTS> args;
+            std::array<float, UIConstants::NUMBER_SCOPE_POINTS> mags;
+            int count= 0;
 
-    // Get the magnitude and arg of each vector.
-    // TODO: Accelerate or equivalent?
-    std::for_each(allPoints[currentPointsIndex].begin(), allPoints[currentPointsIndex].end(), [&](juce::Point<float> point)
-                  {
-                      args[count] = atan2f(point.y, point.x);
-                      mags[count] = sqrtf(point.x * point.x + point.y * point.y);
-                      count++;
-                  } );
-    
-    // Get the max mag to normalise the vectors.
-    float maxMag= *std::max_element(mags.begin(), mags.end());
-    
-    // Normalise the mag, i.e. the max point will be on the circumference.
-    std::for_each(mags.begin(), mags.end(), [&maxMag](float &mag)
-                  {
-                      mag = mag / maxMag;
-                  });
-    
-    // Rotate by PI by 4.
-    std::for_each(args.begin(), args.end(), [](float &arg)
-              {
-                  arg += M_PI_4;
+            // Get the magnitude and arg of each vector.
+            // TODO: Accelerate or equivalent?
+            std::for_each(allPoints[currentPointsIndex].begin(), allPoints[currentPointsIndex].end(), [&](juce::Point<float> point)
+                          {
+                              args[count] = atan2f(point.y, point.x);
+                              mags[count] = sqrtf(point.x * point.x + point.y * point.y);
+                              count++;
+                          } );
+            
+            // Get the max mag to normalise the vectors.
+            float maxMag= *std::max_element(mags.begin(), mags.end());
+            
+            // Normalise the mag, i.e. the max point will be on the circumference.
+            std::for_each(mags.begin(), mags.end(), [&maxMag](float &mag)
+                          {
+                              mag = mag / maxMag;
+                          });
+            
+            // Rotate by PI by 4.
+            std::for_each(args.begin(), args.end(), [](float &arg)
+                      {
+                          arg += M_PI_4;
 
-                  // If the point has arg greater than PI or less than zero it is below the x-axis and needs to be rotated around.
-                  if (arg < 0 || arg > M_PI)
-                  {
-                      arg += M_PI;
-                  }
-              });
-    
-    count = 0;
-    std::for_each(allPoints[currentPointsIndex].begin(), allPoints[currentPointsIndex].end(), [&mags, &args, &count](juce::Point<float> &point)
-                  {
-                      point.x = mags[count] * cosf(args[count]);
-                      point.y = mags[count] * sinf(args[count]);
-                      count++;
-                  });
+                          // If the point has arg greater than PI or less than zero it is below the x-axis and needs to be rotated around.
+                          if (arg < 0 || arg > M_PI)
+                          {
+                              arg += M_PI;
+                          }
+                      });
+            
+            count = 0;
+            std::for_each(allPoints[currentPointsIndex].begin(), allPoints[currentPointsIndex].end(), [&mags, &args, &count](juce::Point<float> &point)
+                          {
+                              point.x = mags[count] * cosf(args[count]);
+                              point.y = mags[count] * sinf(args[count]);
+                              count++;
+                          });
+            
+        }
+            break;
+            
+        case Mode::LISSAJOUS:
+        {
+            using point = juce::Point<float>;
+            
+            // TODO: Dont we already have max value from processor?
+            // Note right is in x and left is in y (usefule for polar)
+            float maxRight = (*std::max_element(allPoints[currentPointsIndex].begin(),
+                                              allPoints[currentPointsIndex].end(),
+                                               [](point& point1, point& point2) { return std::abs(point2.x) > std::abs(point1.x); } )).x;
+            
+            float maxLeft = (*std::max_element(allPoints[currentPointsIndex].begin(),
+                                               allPoints[currentPointsIndex].end(),
+                                               [](point& point1, point& point2) { return std::abs(point2.y) > std::abs(point1.y); } )).y;
+            
+            float max = 1 / 0.7 * std::max(std::abs(maxLeft), std::abs(maxRight));
+            
+            // Now normalise to this max.
+            std::for_each(allPoints[currentPointsIndex].begin(), allPoints[currentPointsIndex].end(), [&max](point &p)
+                          {
+                              p.x /= max;
+                              p.y /= max;
+                          });
+            
+        }
+            break;
+    }
 }
 

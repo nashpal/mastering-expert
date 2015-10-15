@@ -28,7 +28,7 @@ public:
         
     };
     
-    VectorScope ();
+    VectorScope (Mode mode);
     ~VectorScope();
     
     void paint (Graphics& g);
@@ -40,12 +40,17 @@ public:
     // Radius if this a polar sample vectorscope.
     float radius;
     
-    Mode mode = Mode::LISSAJOUS;
+    Mode mode;
     
 private:
     
     // Normalise the magnitude of the points.
     void normalisePoints();
+    
+    // Draw the outline of the scope.
+    void drawScope(Graphics&, Path&, float xOffset, float yOffset);
+    
+    void drawPoints(Graphics&, float xOffset, float yOffset);
     
     // An array of 5 arrays of Point arrays!
     std::array<std::array<juce::Point<float> , UIConstants::NUMBER_SCOPE_POINTS>, UIConstants::NUMBER_SCOPE_BUFFERS> allPoints { { juce::Point<float>(0,0) } };
