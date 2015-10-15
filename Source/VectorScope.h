@@ -21,6 +21,13 @@ class VectorScope  : public Component
 {
 public:
    
+    enum class Mode {
+        
+        LISSAJOUS,
+        POLAR
+        
+    };
+    
     VectorScope ();
     ~VectorScope();
     
@@ -32,6 +39,8 @@ public:
     
     // Radius if this a polar sample vectorscope.
     float radius;
+    
+    Mode mode = Mode::LISSAJOUS;
     
 private:
     

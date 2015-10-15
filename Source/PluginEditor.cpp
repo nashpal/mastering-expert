@@ -34,25 +34,29 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addAndMakeVisible(&logo);
     
     vectorScope.radius = 75;
-//    addAndMakeVisible(vectorScope);
     addChildComponent(vectorScope);
     
     addChildComponent(oscilloScope);
     
     headroomBreachedLabel.setJustificationType(juce::Justification::left);
     headroomBreachedLabel.setFont (Font (15.0f));
-//    addAndMakeVisible(headroomBreachedLabel);
     addChildComponent(headroomBreachedLabel);
     
     lufsMomentaryLoudnessLabel.setJustificationType(juce::Justification::left);
     lufsMomentaryLoudnessLabel.setFont (Font (15.0f));
-//    addAndMakeVisible(lufsMomentaryLoudnessLabel);
     addChildComponent(lufsMomentaryLoudnessLabel);
                   
     lufsShortTermLoudnessLabel.setJustificationType(juce::Justification::left);
     lufsShortTermLoudnessLabel.setFont (Font (15.0f));
-//    addAndMakeVisible(lufsShortTermLoudnessLabel);
     addChildComponent(lufsShortTermLoudnessLabel);
+    
+    rmsLabel.setJustificationType(juce::Justification::left);
+    rmsLabel.setFont (Font (15.0f));
+    addChildComponent(rmsLabel);
+    
+    peakLabel.setJustificationType(juce::Justification::left);
+    peakLabel.setFont (Font (15.0f));
+    addChildComponent(peakLabel);
     
     addAndMakeVisible(homeButton);
     homeButton.addListener(this);
@@ -75,31 +79,25 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     bassSpaceButton.setButtonText("Bass Space");
     
     resetButton.addListener(this);
-//    addAndMakeVisible(resetButton);
     addChildComponent(resetButton);
 
     monoButton.addListener(this);
-//    addAndMakeVisible(monoButton);
     addChildComponent(monoButton);
     
     dynamicRangeLabel.setJustificationType(juce::Justification::left);
     dynamicRangeLabel.setFont (Font (15.0f));
-//    addAndMakeVisible(dynamicRangeLabel);
     addChildComponent(dynamicRangeLabel);
     
     stereoCorrelationLabel.setJustificationType(juce::Justification::left);
     stereoCorrelationLabel.setFont(Font(15.0f));
-//    addAndMakeVisible(stereoCorrelationLabel);
     addChildComponent(stereoCorrelationLabel);
     
     bassSpaceLabel.setJustificationType(juce::Justification::left);
     bassSpaceLabel.setFont(Font(15.0f));
-//    addAndMakeVisible(bassSpaceLabel);
     addChildComponent(bassSpaceLabel);
 
     hyperLink.setTooltip(String("www.masteringthemix.com"));
     hyperLink.setFont(Font(15.0f), false, juce::Justification::left);
-//    addAndMakeVisible(hyperLink);
     addChildComponent(hyperLink);
     
     leftLevel.barCount = 20;
@@ -112,7 +110,6 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     leftLevel.underColour = Colours::green;
     leftLevel.barColour = Colours::black;
     leftLevel.meterType = MeterType::NORMAL;
-//    addAndMakeVisible(leftLevel);
     addChildComponent(leftLevel);
     
     rightLevel.barCount = 20;
@@ -125,7 +122,6 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     rightLevel.underColour = Colours::green;
     rightLevel.barColour = Colours::black;
     rightLevel.meterType = MeterType::NORMAL;
-//    addAndMakeVisible(rightLevel);
     addChildComponent(rightLevel);
     
     
@@ -139,7 +135,6 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     dynamicRangeLeftLevel.underColour = Colours::green;
     dynamicRangeLeftLevel.barColour = Colours::black;
     dynamicRangeLeftLevel.meterType = MeterType::DYNAMICRANGE;
-//    addAndMakeVisible(dynamicHeadroomLevel);
     addChildComponent(dynamicRangeLeftLevel);
     
     dynamicRangeRightLevel.barCount = 20;
@@ -152,7 +147,6 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     dynamicRangeRightLevel.underColour = Colours::green;
     dynamicRangeRightLevel.barColour = Colours::black;
     dynamicRangeRightLevel.meterType = MeterType::DYNAMICRANGE;
-    //    addAndMakeVisible(dynamicHeadroomLevel);
     addChildComponent(dynamicRangeRightLevel);
     
     
@@ -166,32 +160,26 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     stereoCorrelationLevel.underColour = Colours::green;
     stereoCorrelationLevel.barColour = Colours::black;
     stereoCorrelationLevel.meterType = MeterType::CORRRELATION;
-//    addAndMakeVisible(stereoCorrelationLevel);
     addChildComponent(stereoCorrelationLevel);
     
     freq1Label.setJustificationType(juce::Justification::left);
     freq1Label.setFont(Font(10.0f));
-//    addAndMakeVisible(freq1Label);
     addChildComponent(freq1Label);
     
     freq2Label.setJustificationType(juce::Justification::left);
     freq2Label.setFont(Font(10.0f));
-//    addAndMakeVisible(freq2Label);
     addChildComponent(freq2Label);
     
     freq3Label.setJustificationType(juce::Justification::left);
     freq3Label.setFont(Font(10.0f));
-//    addAndMakeVisible(freq3Label);
     addChildComponent(freq3Label);
     
     freq4Label.setJustificationType(juce::Justification::left);
     freq4Label.setFont(Font(10.0f));
-//    addAndMakeVisible(freq4Label);
     addChildComponent(freq4Label);
     
     blockSizeLabel.setJustificationType(juce::Justification::left);
     blockSizeLabel.setFont(Font(10.0f));
-//    addAndMakeVisible(blockSizeLabel);
     addChildComponent(blockSizeLabel);
     
     // Make sure that before the constructor has finished, you've set the
@@ -204,6 +192,8 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     lufsShortTermLoudness.fill(-140);
     
     startTimer (40);
+    
+    mode = UIConstants::Mode::HOME;
 }
 
 TestPluginAudioProcessorEditor::~TestPluginAudioProcessorEditor()
@@ -234,9 +224,11 @@ void TestPluginAudioProcessorEditor::resized()
     
     leftLevel.setBounds(5, 150, 16, 100);
     rightLevel.setBounds(23, 150, 50, 100);
-    headroomBreachedLabel.setBounds(5, 285, 200, 40);
-    lufsMomentaryLoudnessLabel.setBounds(5, 325, 200, 40);
-    lufsShortTermLoudnessLabel.setBounds(5, 365, 200, 40);
+    headroomBreachedLabel.setBounds(5, 240, 200, 40);
+    lufsMomentaryLoudnessLabel.setBounds(5, 260, 200, 40);
+    lufsShortTermLoudnessLabel.setBounds(5, 280, 200, 40);
+    peakLabel.setBounds(5, 300, 200, 40);
+    rmsLabel.setBounds(5, 320, 200, 40);
     
     dynamicRangeLabel.setBounds(205, 350, 200, 40);
     dynamicRangeLeftLevel.setBounds(205, 250, 50, 100);
@@ -259,8 +251,8 @@ void TestPluginAudioProcessorEditor::resized()
     stereoButton.setBounds(405, 400, 50, 20);
     bassSpaceButton.setBounds(605, 400, 150, 20);
     
-    resetButton.setBounds(5, 210, 50, 20);
-    monoButton.setBounds(60, 210, 50, 20);
+    resetButton.setBounds(60, 440, 50, 20);
+    monoButton.setBounds(60, 440, 50, 20);
     
     hyperLink.setBounds(0, 470, 300, 40);
 }
@@ -293,7 +285,9 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         headroomBreachedLabel.setVisible(true);
         lufsMomentaryLoudnessLabel.setVisible(true);
         lufsShortTermLoudnessLabel.setVisible(true);
-
+        peakLabel.setVisible(true);
+        rmsLabel.setVisible(true);
+        
         mode = UIConstants::Mode::HEADROOM;
         
         getProcessor().mode = mode;
@@ -320,6 +314,7 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         this->hideComponents();
         this->showComponents();
         
+        monoButton.setVisible(true);
         stereoCorrelationLevel.setVisible(true);
         vectorScope.setVisible(true);
         
@@ -385,6 +380,8 @@ void TestPluginAudioProcessorEditor::timerCallback()
             {
                 headroomBreachedLabel.setText("Headroom: Breached", dontSendNotification);
             }
+            
+            peakLabel.setText("Peak L: " + String(20 * log10f(processor.leftPeak), 1) + "dB  R: " + String(20 * log10f(processor.rightPeak), 1) + "dB", dontSendNotification);
         }
         
         if (mode == UIConstants::Mode::STEREO)
@@ -411,13 +408,13 @@ void TestPluginAudioProcessorEditor::timerCallback()
             float dynamicRangeLeftRMSAverage = std::accumulate(dynamicRangeLeftRMS.begin(), dynamicRangeLeftRMS.end(), 0.0) / 30.0;
             float dynamicRangeRightRMSAverage = std::accumulate(dynamicRangeRightRMS.begin(), dynamicRangeRightRMS.end(), 0.0) / 30.0;
             
-            dynamicRangeLeftLevel.levelData = 20 * log10f(leftPeakAverage - dynamicRangeLeftRMSAverage);
+            dynamicRangeLeftLevel.levelData = leftPeakAverage - dynamicRangeLeftRMSAverage;
             dynamicRangeLeftLevel.repaint();
             
-            dynamicRangeRightLevel.levelData = 20 * log10f(rightPeakAverage - dynamicRangeRightRMSAverage);
+            dynamicRangeRightLevel.levelData = rightPeakAverage - dynamicRangeRightRMSAverage;
             dynamicRangeRightLevel.repaint();
             
-            dynamicRangeLabel.setText("Dynamic Range L:" + String(dynamicRangeLeftLevel.levelData, 1) + "dB" + " R:" + String(dynamicRangeRightLevel.levelData, 1) + "dB", dontSendNotification);
+            dynamicRangeLabel.setText("Dynamic Range L:" + String(20 * log10f(leftPeakAverage - dynamicRangeLeftRMSAverage), 1) + "dB" + " R:" + String(20 * log10f(rightPeakAverage - dynamicRangeRightRMSAverage), 1) + "dB", dontSendNotification);
             
             oscilloScope.setCurrentPointArray(processor.scopePoints);
             oscilloScope.repaint();
@@ -602,6 +599,8 @@ void TestPluginAudioProcessorEditor::reset()
     TestPluginAudioProcessor& processor = getProcessor();
     
     processor.headroomBreached = false;
+    processor.leftPeak = 0.001;
+    processor.rightPeak = 0.001;
     
     headroomBreachedLabel.setText("Headroom: OK", dontSendNotification);
 }
@@ -623,4 +622,5 @@ void TestPluginAudioProcessorEditor::showComponents()
     bassSpaceButton.setVisible(true);
     homeButton.setVisible(true);
     hyperLink.setVisible(true);
+    resetButton.setVisible(true);
 }

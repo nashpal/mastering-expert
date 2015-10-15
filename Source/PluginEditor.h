@@ -59,6 +59,8 @@ private:
     Label headroomBreachedLabel;
     Label lufsMomentaryLoudnessLabel;
     Label lufsShortTermLoudnessLabel;
+    Label rmsLabel;
+    Label peakLabel;
     Label dynamicRangeLabel;
     Label stereoCorrelationLabel;
     Label bassSpaceLabel;

@@ -100,7 +100,10 @@ public:
     // Hold the block's max sample value from left or right.
     float leftBlockMax;
     float rightBlockMax;
-
+    
+    // Hold the max peak levels until reset.
+    float leftPeak = 0;
+    float rightPeak = 0;
     
     // Hold 100ms of filtered left/right energy.
     float lufsMomentaryLoudnessBlockEnergy;

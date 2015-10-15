@@ -328,6 +328,9 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             leftEnergy += (leftChannelData[i] * leftChannelData[i]);
             rightEnergy += (rightChannelData[i] * rightChannelData[i]);
             
+            // Get overall peak for this track, or until reset.
+            leftPeak = std::abs(leftChannelData[i]) > std::abs(leftPeak) ? std::abs(leftChannelData[i]) : leftPeak;
+            rightPeak = std::abs(rightChannelData[i]) > std::abs(rightPeak) ? std::abs(rightChannelData[i]) : rightPeak;
             
             // ************ Mono playback! ************
             float frameSum = leftChannelData[i] + rightChannelData[i];
@@ -405,6 +408,8 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 {
                     rightBlockMax = std::abs(rightChannelData[i]);
                 }
+                
+            
             }
             
             if (mode == UIConstants::Mode::STEREO)
