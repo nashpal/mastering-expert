@@ -30,6 +30,7 @@ public:
     
     void setCurrentPointArray(std::array<juce::Point<float> , UIConstants::NUMBER_SCOPE_POINTS>);
     
+    void setColour(Colour);
     
 private:
     
@@ -43,6 +44,8 @@ private:
     int currentPointsIndex = 0;
     
     Path logoPath;
+    
+    Colour scopeTraceColour = Colour(0, 255 , 0);
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Oscilloscope)
 };

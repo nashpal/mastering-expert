@@ -175,7 +175,8 @@ void Oscilloscope::paint(juce::Graphics &g)
             alpha = 0.3 - ((currentPointsIndex - count + UIConstants::NUMBER_SCOPE_BUFFERS) % UIConstants::NUMBER_SCOPE_BUFFERS) * 0.03 ;
         }
         
-        g.setColour(Colour::fromFloatRGBA(0, 255 , 0, alpha)) ;
+//        g.setColour(Colour::fromFloatRGBA(0, 255 , 0, alpha)) ;
+        g.setColour(scopeTraceColour.withAlpha(alpha));
         path.clear();
 
         float x = 0;
@@ -212,6 +213,10 @@ void Oscilloscope::setCurrentPointArray(std::array<juce::Point<float>, UIConstan
     this->normalisePoints();
 }
 
+void Oscilloscope::setColour(juce::Colour colour)
+{
+    scopeTraceColour = colour;
+}
 
 void Oscilloscope::normalisePoints()
 {

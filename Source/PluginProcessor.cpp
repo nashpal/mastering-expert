@@ -224,6 +224,21 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     linkwitzRiley.b1 = (-2 * kappa * kappa + 2 * omega_c * omega_c) / delta;
     linkwitzRiley.b2 = (-2 * kappa * omega_c + kappa * kappa + omega_c * omega_c) / delta;
 
+    // Low pass for stereo checking of bass.
+    f_c = 100;
+    K = tanf(M_PI * f_c / sampleRate);
+    norm = 1 / (1 + K / Q + K * K);
+    lowPassLeft.a0 = K * K * norm;
+    lowPassLeft.a1 = 2 * lowPassLeft.a0;
+    lowPassLeft.a2 = lowPassLeft.a0;
+    lowPassLeft.b1 = 2 * (K * K - 1) * norm;
+    lowPassLeft.b2 = (1 - K / Q + K * K) * norm;
+    
+    lowPassRight.a0 = lowPassLeft.a0;
+    lowPassRight.a1 = lowPassLeft.a1;
+    lowPassRight.a2 = lowPassLeft.a2;
+    lowPassRight.b1 = lowPassLeft.b1;
+    lowPassRight.b2 = lowPassLeft.b2;
     
 }
 
@@ -277,6 +292,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
          the required fft resolution.
         */
         
+        // TODO: Move FFT to different thread?
         // Apparently the block size could vary, if it does then our FFT will have issues. I have seen a value of 39!
         if (blockSize == numSamples)
         {
@@ -341,7 +357,16 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             
                 leftChannelData[i] = frameSumAverage;
                 rightChannelData[i] = frameSumAverage;
-                
+            }
+            
+            if (leftOnly)
+            {
+                rightChannelData[i] = leftChannelData[i];
+            }
+            
+            if (rightOnly)
+            {
+                leftChannelData[i] = rightChannelData[i];
             }
 
             if (mode == UIConstants::Mode::HEADROOM)
@@ -381,22 +406,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 
                 sampleCount++;
             }
-                
-            if (mode == UIConstants::Mode::DYNAMIC_RANGE || mode == UIConstants::Mode::STEREO)
-            {
-                // ************ Vectorscope/Oscilloscope ************
-                
-                if (i % scopeStride == 0 && scopeCounter < UIConstants::NUMBER_SCOPE_POINTS)
-                {
-                    
-                    // NOTE: R = x and L = y ! This is what polar vectorscope requires.
-                    // Repurpose this also for oscilloscope.
-                    scopePoints[scopeCounter++] = juce::Point<float>(rightChannelData[i], leftChannelData[i]);
-                    
-                    
-                }
-            }
-            
+
             if (mode == UIConstants::Mode::DYNAMIC_RANGE)
             {
                 // Get the maximum sample in this block for dynamic range calculation.
@@ -414,6 +424,14 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             
             if (mode == UIConstants::Mode::STEREO)
             {
+                
+                if(bassSolo)
+                {
+                    // Apply the low pass filter.
+                    leftChannelData[i] = lowPassLeft.doBiQuad(leftChannelData[i]);
+                    rightChannelData[i] = lowPassRight.doBiQuad(rightChannelData[i]);
+                }
+                
                 // ************ Cross correlation ************
                 
                 /*
@@ -424,6 +442,21 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 
                 Rxy0 += leftChannelData[i] * rightChannelData[i];
                 
+            }
+            
+            if (mode == UIConstants::Mode::DYNAMIC_RANGE || mode == UIConstants::Mode::STEREO)
+            {
+                // ************ Vectorscope/Oscilloscope ************
+                
+                if (i % scopeStride == 0 && scopeCounter < UIConstants::NUMBER_SCOPE_POINTS)
+                {
+                    
+                    // NOTE: R = x and L = y ! This is what polar vectorscope requires.
+                    // Repurpose this also for oscilloscope.
+                    scopePoints[scopeCounter++] = juce::Point<float>(rightChannelData[i], leftChannelData[i]);
+                    
+                    
+                }
             }
                 
             if (mode == UIConstants::Mode::BASS_SPACE)
@@ -475,7 +508,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 rightBlockMax = 0.001;
             }
             
-            
+            // TODO: Not used?
             dynamicRangeMax[dynamicRangeCounter] = std::max(leftBlockMax, rightBlockMax);
             dynamicRangeAvg[dynamicRangeCounter] = blockAverageRMS;
             

@@ -27,6 +27,10 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
         dynamicRangeRightLevel("0db", "10dB", "20db"),
         stereoCorrelationLevel("-1", "0", "+1"),
         bassSpaceLabel("", "Bass Space: soon!"),
+        freq1BassSpaceLevel("","",""),
+        freq2BassSpaceLevel("","",""),
+        freq3BassSpaceLevel("","",""),
+        freq4BassSpaceLevel("0","1","2"),
         hyperLink("Get it mastered at Mastering The Mix", URL ("http://www.masteringthemix.com"))
 
 {
@@ -65,7 +69,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     addAndMakeVisible(headroomButton);
     headroomButton.addListener(this);
-    headroomButton.setButtonText("Heaadroom");
+    headroomButton.setButtonText("Headroom");
     
     addAndMakeVisible(dynamicRangeButton);
     dynamicRangeButton.addListener(this);
@@ -85,6 +89,18 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     monoButton.addListener(this);
     addChildComponent(monoButton);
     
+    leftButton.addListener(this);
+    leftButton.setButtonText("Left");
+    addChildComponent(leftButton);
+    
+    rightButton.addListener(this);
+    rightButton.setButtonText("Right");
+    addChildComponent(rightButton);
+    
+    bassSoloButton.addListener(this);
+    bassSoloButton.setButtonText("Bass Solo");
+    addChildComponent(bassSoloButton);
+    
     dynamicRangeLabel.setJustificationType(juce::Justification::left);
     dynamicRangeLabel.setFont (Font (15.0f));
     addChildComponent(dynamicRangeLabel);
@@ -99,7 +115,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
 
     hyperLink.setTooltip(String("www.masteringthemix.com"));
     hyperLink.setFont(Font(15.0f), false, juce::Justification::left);
-    addChildComponent(hyperLink);
+    addAndMakeVisible(hyperLink);
     
     leftLevel.barCount = 20;
     leftLevel.barWidth = 16;
@@ -130,7 +146,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     dynamicRangeLeftLevel.barWidth = 16;
     dynamicRangeLeftLevel.minValue = 0;
     dynamicRangeLeftLevel.maxValue = 1;
-    dynamicRangeLeftLevel.overBar = 11;
+    dynamicRangeLeftLevel.overBar = 12;
     dynamicRangeLeftLevel.step = 2;
     dynamicRangeLeftLevel.overColour = Colours::red;
     dynamicRangeLeftLevel.underColour = Colours::green;
@@ -142,7 +158,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     dynamicRangeRightLevel.barWidth = 16;
     dynamicRangeRightLevel.minValue = 0;
     dynamicRangeRightLevel.maxValue = 1;
-    dynamicRangeRightLevel.overBar = 11;
+    dynamicRangeRightLevel.overBar = 12;
     dynamicRangeRightLevel.step = 2;
     dynamicRangeRightLevel.overColour = Colours::red;
     dynamicRangeRightLevel.underColour = Colours::green;
@@ -179,6 +195,54 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     freq4Label.setFont(Font(10.0f));
     addChildComponent(freq4Label);
     
+    freq1BassSpaceLevel.barCount = 20;
+    freq1BassSpaceLevel.barWidth = 16;
+    freq1BassSpaceLevel.minValue = 0;
+    freq1BassSpaceLevel.maxValue = 2;
+    freq1BassSpaceLevel.overBar = 7;
+    freq1BassSpaceLevel.step = 2;
+    freq1BassSpaceLevel.overColour = Colours::red;
+    freq1BassSpaceLevel.underColour = Colours::green;
+    freq1BassSpaceLevel.barColour = Colours::black;
+    freq1BassSpaceLevel.meterType = MeterType::NORMAL;
+    addChildComponent(freq1BassSpaceLevel);
+    
+    freq2BassSpaceLevel.barCount = 20;
+    freq2BassSpaceLevel.barWidth = 16;
+    freq2BassSpaceLevel.minValue = 0;
+    freq2BassSpaceLevel.maxValue = 2;
+    freq2BassSpaceLevel.overBar = 7;
+    freq2BassSpaceLevel.step = 2;
+    freq2BassSpaceLevel.overColour = Colours::red;
+    freq2BassSpaceLevel.underColour = Colours::green;
+    freq2BassSpaceLevel.barColour = Colours::black;
+    freq2BassSpaceLevel.meterType = MeterType::NORMAL;
+    addChildComponent(freq2BassSpaceLevel);
+    
+    freq3BassSpaceLevel.barCount = 20;
+    freq3BassSpaceLevel.barWidth = 16;
+    freq3BassSpaceLevel.minValue = 0;
+    freq3BassSpaceLevel.maxValue = 2;
+    freq3BassSpaceLevel.overBar = 7;
+    freq3BassSpaceLevel.step = 2;
+    freq3BassSpaceLevel.overColour = Colours::red;
+    freq3BassSpaceLevel.underColour = Colours::green;
+    freq3BassSpaceLevel.barColour = Colours::black;
+    freq3BassSpaceLevel.meterType = MeterType::NORMAL;
+    addChildComponent(freq3BassSpaceLevel);
+    
+    freq4BassSpaceLevel.barCount = 20;
+    freq4BassSpaceLevel.barWidth = 16;
+    freq4BassSpaceLevel.minValue = 0;
+    freq4BassSpaceLevel.maxValue = 2;
+    freq4BassSpaceLevel.overBar = 7;
+    freq4BassSpaceLevel.step = 2;
+    freq4BassSpaceLevel.overColour = Colours::red;
+    freq4BassSpaceLevel.underColour = Colours::green;
+    freq4BassSpaceLevel.barColour = Colours::black;
+    freq4BassSpaceLevel.meterType = MeterType::NORMAL;
+    addChildComponent(freq4BassSpaceLevel);
+    
     blockSizeLabel.setJustificationType(juce::Justification::left);
     blockSizeLabel.setFont(Font(10.0f));
     addChildComponent(blockSizeLabel);
@@ -195,6 +259,9 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     startTimer (40);
     
     mode = UIConstants::Mode::HOME;
+    getProcessor().mode = UIConstants::Mode::HOME;
+    
+    homeButton.setToggleState(true, dontSendNotification);
 }
 
 TestPluginAudioProcessorEditor::~TestPluginAudioProcessorEditor()
@@ -217,11 +284,17 @@ void TestPluginAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
     
-    logo.setBounds(0, 0, 540, 200);
+    homeButton.setBounds(4, 440, 50, 20);
+    headroomButton.setBounds(5, 400, 150, 20);
+    dynamicRangeButton.setBounds(195, 400, 150, 20);
+    stereoButton.setBounds(395, 400, 150, 20);
+    bassSpaceButton.setBounds(595, 400, 150, 20);
     
-    vectorScope.setBounds(550, 0, 192, 286);
+    logo.setBounds(100, 100, 540, 200);
     
-    oscilloScope.setBounds(550, 0, 192, 286);
+    vectorScope.setBounds(350, 0, 192, 286);
+    
+    oscilloScope.setBounds(350, 0, 192, 286);
     
     leftLevel.setBounds(5, 150, 16, 100);
     rightLevel.setBounds(23, 150, 50, 100);
@@ -237,6 +310,10 @@ void TestPluginAudioProcessorEditor::resized()
 
     stereoCorrelationLabel.setBounds(405, 350, 200, 40);
     stereoCorrelationLevel.setBounds(405, 250, 50, 100);
+    monoButton.setBounds(120, 440, 50, 20);
+    leftButton.setBounds(180, 440, 50, 20);
+    rightButton.setBounds(240, 440, 50, 20);
+    bassSoloButton.setBounds(300, 440, 50, 20);
     
     bassSpaceLabel.setBounds(605, 350, 200, 40);
     
@@ -246,14 +323,12 @@ void TestPluginAudioProcessorEditor::resized()
     freq4Label.setBounds(605, 320, 100, 25);
     blockSizeLabel.setBounds(605, 200, 100, 25);
     
-    homeButton.setBounds(4, 440, 50, 20);
-    headroomButton.setBounds(5, 400, 100, 20);
-    dynamicRangeButton.setBounds(205, 400, 150, 20);
-    stereoButton.setBounds(405, 400, 50, 20);
-    bassSpaceButton.setBounds(605, 400, 150, 20);
-    
+    freq1BassSpaceLevel.setBounds(405, 250, 16, 100);
+    freq2BassSpaceLevel.setBounds(423, 250, 16, 100);
+    freq3BassSpaceLevel.setBounds(441, 250, 16, 100);
+    freq4BassSpaceLevel.setBounds(459, 250, 50, 100);
+
     resetButton.setBounds(60, 440, 50, 20);
-    monoButton.setBounds(60, 440, 50, 20);
     
     hyperLink.setBounds(0, 470, 300, 40);
 }
@@ -263,23 +338,27 @@ void TestPluginAudioProcessorEditor::resized()
 void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
 {
     
-    if (button == &resetButton)
+    if(button == &homeButton)
     {
-        this->reset();
-        return;
-    }
-    
-    if(button == &monoButton)
-    {
-        monoButton.setToggleState(!monoButton.getToggleState(), dontSendNotification);
         
-        getProcessor().mono = monoButton.getToggleState();
+        this->hideComponents();
+        this->showComponents();
+        
+        homeButton.setToggleState(!homeButton.getToggleState(), dontSendNotification);
+        
+        logo.setVisible(true);
+        
+        mode = UIConstants::Mode::HOME;
+        
+        getProcessor().mode = mode;
     }
     
     if (button == &headroomButton)
     {
         this->hideComponents();
         this->showComponents();
+        
+        headroomButton.setToggleState(!headroomButton.getToggleState(), dontSendNotification);
         
         leftLevel.setVisible(true);
         rightLevel.setVisible(true);
@@ -299,6 +378,8 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         this->hideComponents();
         this->showComponents();
         
+        dynamicRangeButton.setToggleState(!dynamicRangeButton.getToggleState(), dontSendNotification);
+        
         dynamicRangeLeftLevel.setVisible(true);
         dynamicRangeRightLevel.setVisible(true);
         dynamicRangeLabel.setVisible(true);
@@ -315,7 +396,13 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         this->hideComponents();
         this->showComponents();
         
+        stereoButton.setToggleState(!stereoButton.getToggleState(), dontSendNotification);
+        
         monoButton.setVisible(true);
+        leftButton.setVisible(true);
+        rightButton.setVisible(true);
+        bassSoloButton.setVisible(true);
+        
         stereoCorrelationLevel.setVisible(true);
         vectorScope.setVisible(true);
         
@@ -330,29 +417,65 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         this->hideComponents();
         this->showComponents();
         
+        bassSpaceButton.setToggleState(!bassSpaceButton.getToggleState(), dontSendNotification);
+        
         freq1Label.setVisible(true);
         freq2Label.setVisible(true);
         freq3Label.setVisible(true);
         freq4Label.setVisible(true);
         
+        freq1BassSpaceLevel.setVisible(true);
+        freq2BassSpaceLevel.setVisible(true);
+        freq3BassSpaceLevel.setVisible(true);
+        freq4BassSpaceLevel.setVisible(true);
+
         mode = UIConstants::Mode::BASS_SPACE;
         
         getProcessor().mode = mode;
 
     }
-    
-    if(button == &homeButton)
+
+    if (button == &resetButton)
     {
-        this->hideComponents();
-        this->showComponents();
-        
-        logo.setVisible(true);
-        
-        mode = UIConstants::Mode::HOME;
-        
-        getProcessor().mode = mode;
+        this->reset();
+        return;
     }
     
+    if(button == &monoButton)
+    {
+        monoButton.setToggleState(!monoButton.getToggleState(), dontSendNotification);
+        leftButton.setToggleState(false, dontSendNotification);
+        rightButton.setToggleState(false, dontSendNotification);
+        getProcessor().mono = monoButton.getToggleState();
+        getProcessor().leftOnly = false;
+        getProcessor().rightOnly = false;
+    }
+    
+    if(button == &bassSoloButton)
+    {
+        bassSoloButton.setToggleState(!bassSoloButton.getToggleState(), dontSendNotification);
+        getProcessor().bassSolo = bassSoloButton.getToggleState();
+    }
+    
+    if(button == &leftButton)
+    {
+        leftButton.setToggleState(!leftButton.getToggleState(), dontSendNotification);
+        rightButton.setToggleState(false, dontSendNotification);
+        monoButton.setToggleState(false, dontSendNotification);
+        getProcessor().leftOnly = leftButton.getToggleState();
+        getProcessor().rightOnly = false;
+        getProcessor().mono = false;
+    }
+    
+    if(button == &rightButton)
+    {
+        rightButton.setToggleState(!rightButton.getToggleState(), dontSendNotification);
+        leftButton.setToggleState(false, dontSendNotification);
+        monoButton.setToggleState(false, dontSendNotification);
+        getProcessor().rightOnly = rightButton.getToggleState();
+        getProcessor().leftOnly = false;
+        getProcessor().mono = false;
+    }
 }
 
 
@@ -397,25 +520,38 @@ void TestPluginAudioProcessorEditor::timerCallback()
         
         if (mode == UIConstants::Mode::DYNAMIC_RANGE)
         {
-            dynamicRangeLeftPeaks[dynamicRangeBlockCount % 30] = processor.leftBlockMax;
-            dynamicRangeRightPeaks[dynamicRangeBlockCount % 30] = processor.rightBlockMax;
+            dynamicRangeLeftPeaks[dynamicRangeBlockCount % 50] = processor.leftBlockMax;
+            dynamicRangeRightPeaks[dynamicRangeBlockCount % 50] = processor.rightBlockMax;
             
-            dynamicRangeLeftRMS[dynamicRangeBlockCount % 30] = processor.leftRMS;
-            dynamicRangeRightRMS[dynamicRangeBlockCount % 30] = processor.rightRMS;
+            dynamicRangeLeftRMS[dynamicRangeBlockCount % 50] = processor.leftRMS;
+            dynamicRangeRightRMS[dynamicRangeBlockCount % 50] = processor.rightRMS;
             
-            float leftPeakAverage = std::accumulate(dynamicRangeLeftPeaks.begin(), dynamicRangeLeftPeaks.end(), 0.0) / 30.0;
-            float rightPeakAverage = std::accumulate(dynamicRangeRightPeaks.begin(), dynamicRangeRightPeaks.end(), 0.0) / 30.0;
+//            float leftPeakAverage = std::accumulate(dynamicRangeLeftPeaks.begin(), dynamicRangeLeftPeaks.end(), 0.0) / 50.0;
+//            float rightPeakAverage = std::accumulate(dynamicRangeRightPeaks.begin(), dynamicRangeRightPeaks.end(), 0.0) / 50.0;
             
-            float dynamicRangeLeftRMSAverage = std::accumulate(dynamicRangeLeftRMS.begin(), dynamicRangeLeftRMS.end(), 0.0) / 30.0;
-            float dynamicRangeRightRMSAverage = std::accumulate(dynamicRangeRightRMS.begin(), dynamicRangeRightRMS.end(), 0.0) / 30.0;
+            float leftPeakMax = *std::max_element(dynamicRangeLeftPeaks.begin(), dynamicRangeLeftPeaks.end());
+            float rightPeakMax = *std::max_element(dynamicRangeRightPeaks.begin(), dynamicRangeRightPeaks.end());
             
-            dynamicRangeLeftLevel.levelData = dynamicRangeLeftRMSAverage / leftPeakAverage;
+            float dynamicRangeLeftRMSAverage = std::accumulate(dynamicRangeLeftRMS.begin(), dynamicRangeLeftRMS.end(), 0.0) / 50.0;
+            float dynamicRangeRightRMSAverage = std::accumulate(dynamicRangeRightRMS.begin(), dynamicRangeRightRMS.end(), 0.0) / 50.0;
+            
+            dynamicRangeLeftLevel.levelData = 1 - dynamicRangeLeftRMSAverage / leftPeakMax;
             dynamicRangeLeftLevel.repaint();
             
-            dynamicRangeRightLevel.levelData = dynamicRangeRightRMSAverage / rightPeakAverage ;
+            dynamicRangeRightLevel.levelData = 1 - dynamicRangeRightRMSAverage / rightPeakMax ;
             dynamicRangeRightLevel.repaint();
             
-            dynamicRangeLabel.setText("Dynamic Range L:" + String(-20 * log10f(dynamicRangeLeftRMSAverage / leftPeakAverage), 1) + "dB" + " R:" + String(-20 * log10f(dynamicRangeRightRMSAverage / rightPeakAverage), 1) + "dB", dontSendNotification);
+            float leftDynamicRangedB = -20 * log10f(dynamicRangeLeftRMSAverage / leftPeakMax);
+            float rightDynamicRangedB = -20 * log10f(dynamicRangeRightRMSAverage / rightPeakMax);
+            dynamicRangeLabel.setText("Dynamic Range L:" + String(leftDynamicRangedB, 1) + "dB" + " R:" + String(rightDynamicRangedB, 1) + "dB", dontSendNotification);
+            
+            if (leftDynamicRangedB < 10 || rightDynamicRangedB < 10)
+            {
+                oscilloScope.setColour(Colour(255,0,0));
+            } else
+            {
+                oscilloScope.setColour(Colour(0,255,0));
+            }
             
             oscilloScope.setCurrentPointArray(processor.scopePoints);
             oscilloScope.repaint();
@@ -575,18 +711,27 @@ void TestPluginAudioProcessorEditor::actionListenerCallback(const String& messag
     
     if (message == UIConstants::BASS_SPACE_MESSAGE)
     {
+        
         float averageFilteredRMSdB = 20 * log10f(std::accumulate(processor.leftRMSFilteredAverage.begin(), processor.leftRMSFilteredAverage.end(), 0.0) / 100);
         float averageBinLeveldB = std::accumulate(processor.binAmplitudes[0].begin(), processor.binAmplitudes[0].end(), 0.0) / 100;
         freq1Label.setText("Freq: " + String(processor.binFrequencies[0]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB) , dontSendNotification);
+        freq1BassSpaceLevel.levelData = averageFilteredRMSdB / averageBinLeveldB;
+        freq1BassSpaceLevel.repaint();
         
         averageBinLeveldB = std::accumulate(processor.binAmplitudes[1].begin(), processor.binAmplitudes[1].end(), 0.0) / 100;
         freq2Label.setText("Freq: " + String(processor.binFrequencies[1]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+        freq2BassSpaceLevel.levelData = averageFilteredRMSdB / averageBinLeveldB;
+        freq2BassSpaceLevel.repaint();
         
         averageBinLeveldB = std::accumulate(processor.binAmplitudes[2].begin(), processor.binAmplitudes[2].end(), 0.0) / 100;
         freq3Label.setText("Freq: " + String(processor.binFrequencies[2]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+        freq3BassSpaceLevel.levelData = averageFilteredRMSdB / averageBinLeveldB;
+        freq3BassSpaceLevel.repaint();
         
         averageBinLeveldB = std::accumulate(processor.binAmplitudes[3].begin(), processor.binAmplitudes[3].end(), 0.0) / 100;
         freq4Label.setText("Freq: " + String(processor.binFrequencies[3]) + "Hz | Amp: " + String(averageFilteredRMSdB / averageBinLeveldB), dontSendNotification);
+        freq4BassSpaceLevel.levelData = averageFilteredRMSdB / averageBinLeveldB;
+        freq4BassSpaceLevel.repaint();
         
         blockSizeLabel.setText("Blocksize: " + String(processor.blockSize), dontSendNotification);
     }
@@ -618,10 +763,20 @@ void TestPluginAudioProcessorEditor::hideComponents()
 void TestPluginAudioProcessorEditor::showComponents()
 {
     headroomButton.setVisible(true);
+    headroomButton.setToggleState(false, dontSendNotification);
+    
     dynamicRangeButton.setVisible(true);
+    dynamicRangeButton.setToggleState(false, dontSendNotification);
+    
     stereoButton.setVisible(true);
+    stereoButton.setToggleState(false, dontSendNotification);
+    
     bassSpaceButton.setVisible(true);
+    bassSpaceButton.setToggleState(false, dontSendNotification);
+    
     homeButton.setVisible(true);
+    homeButton.setToggleState(false, dontSendNotification);
+    
     hyperLink.setVisible(true);
     resetButton.setVisible(true);
 }

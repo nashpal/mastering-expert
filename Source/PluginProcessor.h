@@ -72,6 +72,13 @@ public:
     // Determine whether to sum stereo;
     bool mono = false;
     
+    // Determine whether to solo bass
+    bool bassSolo = false;
+    
+    // Determine to play L/R only.
+    bool leftOnly = false;
+    bool rightOnly = false;
+    
     // How many dynmaic range measurements have we taken.
     int dynamicRangeCounter = 0;
     
@@ -135,12 +142,21 @@ private:
     // Conting for lufs gating block.
     int sampleCount = 0;
   
-    
+    // For LUFS
     BiQuad highShelfLeft;
     BiQuad highShelfRight;
     BiQuad highPassLeft;
     BiQuad highPassRight;
+    
+    // For bass space.
+    // TODO: Maybe use different filter?
     BiQuad linkwitzRiley;
+    
+    // For stereo.
+    BiQuad lowPassLeft;
+    BiQuad lowPassRight;
+    
+    
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TestPluginAudioProcessor)

@@ -74,6 +74,10 @@ private:
     
     TextButton resetButton;
     TextButton monoButton;
+    TextButton leftButton;
+    TextButton rightButton;
+    
+    TextButton bassSoloButton;
     
     LevelMeter leftLevel;
     LevelMeter rightLevel;
@@ -86,6 +90,11 @@ private:
     Label freq2Label;
     Label freq3Label;
     Label freq4Label;
+    
+    LevelMeter freq1BassSpaceLevel;
+    LevelMeter freq2BassSpaceLevel;
+    LevelMeter freq3BassSpaceLevel;
+    LevelMeter freq4BassSpaceLevel;
     
     Label blockSizeLabel;
     
@@ -112,12 +121,12 @@ private:
     int dynamicRangeBlockCount = 0;
     
     // Hold a vector of 30 most recent left/right peaks for dynamic range calc.
-    std::array<float, 30> dynamicRangeLeftPeaks;
-    std::array<float, 30> dynamicRangeRightPeaks;
+    std::array<float, 50> dynamicRangeLeftPeaks;
+    std::array<float, 50> dynamicRangeRightPeaks;
     
     // Hold a vector of 30 most recent left/right RMS for dynamic range calc.
-    std::array<float, 30> dynamicRangeLeftRMS;
-    std::array<float, 30> dynamicRangeRightRMS;
+    std::array<float, 50> dynamicRangeLeftRMS;
+    std::array<float, 50> dynamicRangeRightRMS;
     
     // Resizable array of lufs short term loudness values that are > LUFS_ABSOLUTE_TRESHOLD and < LUFS_RELATIVE_THRESHOLD
     std::vector<float> lufsAbsoluteGated;

@@ -151,10 +151,10 @@ void VectorScope::paint (Graphics& g)
     Rectangle<float> rect = logoPath.getBounds();
     Rectangle<int> rect2 = getLocalBounds();
     
-//    g.setColour (Colours::black);
-//    g.fillPath (logoPath, RectanglePlacement (RectanglePlacement::stretchToFit)
-//                .getTransformToFit (logoPath.getBounds(),
-//                                    getLocalBounds().toFloat()));
+    g.setColour (Colours::black);
+    g.fillPath (logoPath, RectanglePlacement (RectanglePlacement::stretchToFit)
+                .getTransformToFit (logoPath.getBounds(),
+                                    getLocalBounds().toFloat()));
 
 
     this->drawScope(g, path, xOffset, yOffset);
