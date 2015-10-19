@@ -1211,6 +1211,7 @@
     <ClCompile Include="..\..\..\modules\juce_audio_plugin_client\VST3\juce_VST3_Wrapper.cpp"/>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Bessel.h"/>
     <ClInclude Include="..\..\Source\Oscilloscope.h"/>
     <ClInclude Include="..\..\Source\BiQuad.h"/>
     <ClInclude Include="..\..\Source\Settings.h"/>

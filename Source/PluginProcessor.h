@@ -14,6 +14,7 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "Settings.h"
 #include "BiQuad.h"
+#include "Bessel.h"
 #include <array>
 
 
@@ -153,10 +154,17 @@ private:
     BiQuad linkwitzRiley;
     
     // For stereo.
-    BiQuad lowPassLeft;
-    BiQuad lowPassRight;
+    BiQuad lowPassLeft1;
+    BiQuad lowPassRight1;
+    BiQuad lowPassLeft2;
+    BiQuad lowPassRight2;
+    BiQuad lowPassLeft3;
+    BiQuad lowPassRight3;
+    BiQuad lowPassLeft4;
+    BiQuad lowPassRight4;
     
-    
+    Bessel lowPassBesselLeft;
+    Bessel lowPassBesselRight;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TestPluginAudioProcessor)

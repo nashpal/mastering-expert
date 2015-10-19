@@ -1485,6 +1485,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Source\Bessel.h">
+      <Filter>MasteringExpert</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Source\Oscilloscope.h">
       <Filter>MasteringExpert</Filter>
     </ClInclude>

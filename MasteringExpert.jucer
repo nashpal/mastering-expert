@@ -11,6 +11,7 @@
               aaxIdentifier="com.masteringthemix.MasteringExpert" pluginAAXCategory="AAX_ePlugInCategory_Dynamics"
               jucerVersion="3.2.0">
   <MAINGROUP id="k39kLe" name="MasteringExpert">
+    <FILE id="DltkZc" name="Bessel.h" compile="0" resource="0" file="Source/Bessel.h"/>
     <FILE id="p9O4WU" name="Oscilloscope.cpp" compile="1" resource="0"
           file="Source/Oscilloscope.cpp"/>
     <FILE id="x6SjNV" name="Oscilloscope.h" compile="0" resource="0" file="Source/Oscilloscope.h"/>

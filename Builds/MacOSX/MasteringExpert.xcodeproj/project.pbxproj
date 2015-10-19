@@ -944,6 +944,7 @@
 		F4662AA551F1840239B5688F /* juce_PropertyComponent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = juce_PropertyComponent.cpp; path = ../../../modules/juce_gui_basics/properties/juce_PropertyComponent.cpp; sourceTree = SOURCE_ROOT; };
 		F508945E086744742267E371 /* juce_Colours.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_Colours.h; path = ../../../modules/juce_graphics/colour/juce_Colours.h; sourceTree = SOURCE_ROOT; };
 		F5E3001C7BF6159996C34A89 /* juce_AudioProcessor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_AudioProcessor.h; path = ../../../modules/juce_audio_processors/processors/juce_AudioProcessor.h; sourceTree = SOURCE_ROOT; };
+		F68A833CC0303761B69BB5B5 /* Bessel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Bessel.h; path = ../../Source/Bessel.h; sourceTree = SOURCE_ROOT; };
 		F6B18861C1D216A4E302944A /* CarbonEventHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = CarbonEventHandler.h; path = Extras/CoreAudio/AudioUnits/AUPublic/AUCarbonViewBase/CarbonEventHandler.h; sourceTree = DEVELOPER_DIR; };
 		F6F7CEACFA44EDC5AF844860 /* juce_WindowsHooks.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = juce_WindowsHooks.h; path = ../../../modules/juce_audio_plugin_client/utility/juce_WindowsHooks.h; sourceTree = SOURCE_ROOT; };
 		F7035A2C75CAD18A8074B16D /* RecentFilesMenuTemplate.nib */ = {isa = PBXFileReference; lastKnownFileType = file.nib; path = RecentFilesMenuTemplate.nib; sourceTree = SOURCE_ROOT; };
@@ -1862,14 +1863,15 @@
 		85912661F3712D537904699E /* MasteringExpert */ = {
 			isa = PBXGroup;
 			children = (
+				6B3966BCB9214A810BF03E17 /* Oscilloscope.cpp */,
+				B8B789935A27BFE120E7E914 /* Oscilloscope.h */,
 				32615117AAB4EC7ED63303FC /* BiQuad.h */,
+				F68A833CC0303761B69BB5B5 /* Bessel.h */,
 				699B706E75285C6EF83FF8FB /* Settings.h */,
 				6BCD9EE22DB3192E722DBB71 /* LevelMeter.cpp */,
 				950AAED44EC5A398BBF5F083 /* LevelMeter.h */,
 				7E5181669572F8F27D049333 /* VectorScope.cpp */,
 				DF1B1AC9300682A3B536E921 /* VectorScope.h */,
-				B8B789935A27BFE120E7E914 /* Oscilloscope.h */,
-				6B3966BCB9214A810BF03E17 /* Oscilloscope.cpp */,
 				CA100EA4555649108989CF67 /* EmbeddedImage.cpp */,
 				52D73A36532C020D710E313C /* EmbeddedImage.h */,
 				D5E4FCB03D6DC4DEA0E72972 /* Source */,

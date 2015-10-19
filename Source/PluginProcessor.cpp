@@ -225,21 +225,32 @@ void TestPluginAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     linkwitzRiley.b2 = (-2 * kappa * omega_c + kappa * kappa + omega_c * omega_c) / delta;
 
     // Low pass for stereo checking of bass.
-    f_c = 100;
+    f_c = 150;
     K = tanf(M_PI * f_c / sampleRate);
     norm = 1 / (1 + K / Q + K * K);
-    lowPassLeft.a0 = K * K * norm;
-    lowPassLeft.a1 = 2 * lowPassLeft.a0;
-    lowPassLeft.a2 = lowPassLeft.a0;
-    lowPassLeft.b1 = 2 * (K * K - 1) * norm;
-    lowPassLeft.b2 = (1 - K / Q + K * K) * norm;
+    lowPassLeft1.a0 = K * K * norm;
+    lowPassLeft1.a1 = 2 * lowPassLeft1.a0;
+    lowPassLeft1.a2 = lowPassLeft1.a0;
+    lowPassLeft1.b1 = 2 * (K * K - 1) * norm;
+    lowPassLeft1.b2 = (1 - K / Q + K * K) * norm;
+
+    // Cascade these for incresed steepness of
+    lowPassRight1 = lowPassLeft1;
+    lowPassLeft2  = lowPassLeft1;
+    lowPassLeft3  = lowPassLeft1;
+    lowPassLeft4  = lowPassLeft1;
     
-    lowPassRight.a0 = lowPassLeft.a0;
-    lowPassRight.a1 = lowPassLeft.a1;
-    lowPassRight.a2 = lowPassLeft.a2;
-    lowPassRight.b1 = lowPassLeft.b1;
-    lowPassRight.b2 = lowPassLeft.b2;
+    lowPassRight2 = lowPassLeft1;
+    lowPassRight3 = lowPassLeft1;
+    lowPassRight4 = lowPassLeft1;
     
+    lowPassBesselLeft.gain = 1.533856183e+07;
+    lowPassBesselLeft.b1 = 3.8994176138;
+    lowPassBesselLeft.b2 = -5.7027827433;
+    lowPassBesselLeft.b3 = 3.7072073840;
+    lowPassBesselLeft.b4 = -0.9038432976;
+    
+    lowPassBesselRight = lowPassBesselLeft;
 }
 
 void TestPluginAudioProcessor::releaseResources()
@@ -428,8 +439,21 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 if(bassSolo)
                 {
                     // Apply the low pass filter.
-                    leftChannelData[i] = lowPassLeft.doBiQuad(leftChannelData[i]);
-                    rightChannelData[i] = lowPassRight.doBiQuad(rightChannelData[i]);
+                    /*
+                    float left = lowPassLeft1.doBiQuad(leftChannelData[i]);
+                    float right = lowPassRight1.doBiQuad(rightChannelData[i]);
+                    left = lowPassLeft2.doBiQuad(left);
+                    right = lowPassRight2.doBiQuad(right);
+                    left = lowPassLeft3.doBiQuad(left);
+                    right = lowPassRight3.doBiQuad(right);
+                    leftChannelData[i] = lowPassLeft4.doBiQuad(left);
+                    rightChannelData[i] = lowPassRight4.doBiQuad(right);
+                    */
+                    
+                
+                    leftChannelData[i] = lowPassBesselLeft.doBessel(leftChannelData[i]);
+                    rightChannelData[i] = lowPassBesselRight.doBessel(rightChannelData[i]);
+                    
                 }
                 
                 // ************ Cross correlation ************
