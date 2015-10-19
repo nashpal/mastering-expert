@@ -361,12 +361,12 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
             
             if (leftOnly)
             {
-                rightChannelData[i] = leftChannelData[i];
+                leftChannelData[i] = frameSum / 2.f;
             }
             
             if (rightOnly)
             {
-                leftChannelData[i] = rightChannelData[i];
+                rightChannelData[i] = frameSum / 2.f;
             }
 
             if (mode == UIConstants::Mode::HEADROOM)
