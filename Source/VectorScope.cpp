@@ -244,7 +244,7 @@ void VectorScope::drawPoints(Graphics& g, float xOffset, float yOffset)
                     alpha = 0.3 - ((currentPointsIndex - count + UIConstants::NUMBER_SCOPE_BUFFERS) % UIConstants::NUMBER_SCOPE_BUFFERS) * 0.015 ;
                 }
                 
-                g.setColour(Colour::fromFloatRGBA(0, 0 , 0, alpha)) ;
+//                g.setColour(Colour::fromFloatRGBA(0, 0 , 0, alpha));
                 
                 for (auto& point : points)
                 {
@@ -260,6 +260,12 @@ void VectorScope::drawPoints(Graphics& g, float xOffset, float yOffset)
                         {
                             // Note right is in x and left is in y (usefule for polar)
 //                            jassert(point.x < 1);
+                            if ((point.y < point.x - 0.5) || (point.y > point.x + 0.5))
+                            {
+                                g.setColour(Colour::fromFloatRGBA(255, 0 , 0, alpha));
+                            } else{
+                                g.setColour(Colour::fromFloatRGBA(0, 255 , 0, alpha));
+                            }
                             g.setPixel(radius + xOffset + point.x * radius, radius + yOffset - point.y * radius );
                         }
                             

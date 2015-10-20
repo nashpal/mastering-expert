@@ -451,6 +451,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                     */
                     
                 
+                    
                     leftChannelData[i] = lowPassBesselLeft.doBessel(leftChannelData[i]);
                     rightChannelData[i] = lowPassBesselRight.doBessel(rightChannelData[i]);
                     
