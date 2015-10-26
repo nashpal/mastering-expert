@@ -12,20 +12,20 @@ LevelMeter::LevelMeter (String bottomLabelText, String midLabelText, String topL
 {
     
 
-    bottomLabel.setJustificationType(juce::Justification::left);
-    bottomLabel.setText(bottomLabelText, dontSendNotification);
-    addAndMakeVisible(bottomLabel);
-    bottomLabel.setFont (Font (10.0f));
+    minLabel.setJustificationType(juce::Justification::left);
+    minLabel.setText(bottomLabelText, dontSendNotification);
+    addAndMakeVisible(minLabel);
+    minLabel.setFont (Font (10.0f));
     
     midLabel.setJustificationType(juce::Justification::left);
     midLabel.setText(midLabelText, dontSendNotification);
     addAndMakeVisible(midLabel);
     midLabel.setFont (Font (10.0f));
     
-    topLabel.setJustificationType(juce::Justification::left);
-    topLabel.setText(topLabelText, dontSendNotification);
-    addAndMakeVisible(topLabel);
-    topLabel.setFont (Font (10.0f));
+    maxLabel.setJustificationType(juce::Justification::left);
+    maxLabel.setText(topLabelText, dontSendNotification);
+    addAndMakeVisible(maxLabel);
+    maxLabel.setFont (Font (10.0f));
 }
 
 LevelMeter::~LevelMeter()
@@ -42,7 +42,7 @@ void LevelMeter::paint (Graphics& g)
     //[UserPaint] Add your own custom painting code here..
     Path wavePath;
     
-    int barHeight = (getBounds().getHeight() - ((barCount - 1) * step)) / barCount;
+    int barThickness = 0;
     int xOffset = 0;
     int yOffset = getBounds().getHeight();
     
@@ -53,19 +53,32 @@ void LevelMeter::paint (Graphics& g)
     x = xOffset;
     y = yOffset;
     
+    switch (meterOrientation) {
+        case MeterOrientation::VERTICAL:
+            
+            barThickness = (getBounds().getHeight() - ((barCount - 1) * step)) / barCount;
+            break;
+        case MeterOrientation::HORIZONTAL:
+            barThickness = (getBounds().getWidth() - ((barCount - 1) * step)) / barCount;
+            
+        default:
+            break;
+    }
     
     if (meterType == MeterType::CORRRELATION)
     {
+        
+        
         // Draw background bars.
         g.setColour (barColour);
         
         for (int count = 1; count <= barCount; count++)
         {
-            g.drawLine(x, y, x+barWidth, y, barHeight);
-            y -= (step + barHeight);
+            g.drawLine(x, y, x + barLength, y, barThickness);
+            y -= (step + barThickness);
         }
         
-        y = yOffset - currentBarCount * (step + barHeight);
+        y = yOffset - currentBarCount * (step + barThickness);
         
         // Now draw the correlation bar.
         if (currentBarCount >= overBar)
@@ -77,9 +90,29 @@ void LevelMeter::paint (Graphics& g)
             g.setColour (overColour);
         }
         
-        g.drawLine(x, y, x+barWidth, y, barHeight);
+        g.drawLine(x, y, x + barLength, y, barThickness);
     }
-    else
+    else if (meterType == MeterType::STEREOBALANCE)
+    {
+        
+        // Draw background bars.
+        g.setColour (barColour);
+        
+        for (int count = 1; count <= barCount; count++)
+        {
+            g.drawLine(x, y, x, y - barLength, barThickness);
+            x += (step + barThickness);
+        }
+        
+        x = xOffset + currentBarCount * (step + barThickness);
+        
+        // Now draw the balance bar.
+        g.setColour (underColour);
+        
+        g.drawLine(x, y, x, y - barLength, barThickness);
+ 
+        
+    } else
     {
     
         for (int count = 1; count <= barCount; count++)
@@ -123,9 +156,9 @@ void LevelMeter::paint (Graphics& g)
                     break;
             }
                    
-            g.drawLine(x, y, x+barWidth, y, barHeight);
+            g.drawLine(x, y, x + barLength, y, barThickness);
             
-            y -= (step + barHeight);
+            y -= (step + barThickness);
         }
         
     }
@@ -136,8 +169,22 @@ void LevelMeter::paint (Graphics& g)
 
 void LevelMeter::resized()
 {
-    bottomLabel.setBounds(barWidth + 4, getBounds().getHeight() - 15, 30, 20);
-    midLabel.setBounds(barWidth + 4, getBounds().getHeight() / 2. - 10, 30, 20);
-    topLabel.setBounds(barWidth + 4, 0, 30, 20);
+    switch (meterOrientation) {
+        case MeterOrientation::VERTICAL:
+            
+            minLabel.setBounds(barLength + 4, getBounds().getHeight() - 15, 30, 20);
+            midLabel.setBounds(barLength + 4, getBounds().getHeight() / 2. - 10, 30, 20);
+            maxLabel.setBounds(barLength + 4, 0, 30, 20);
+
+            break;
+        case MeterOrientation::HORIZONTAL:
+            
+            minLabel.setBounds(0, 0, 30, 20);
+            midLabel.setBounds(getBounds().getWidth() / 2. - 10, 0, 30, 20);
+            maxLabel.setBounds(getBounds().getWidth() - 15, 0, 30, 20);
+        default:
+            break;
+    }
+    
 }
 

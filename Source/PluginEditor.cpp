@@ -26,6 +26,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
         dynamicRangeLeftLevel("", "", ""),
         dynamicRangeRightLevel("0db", "10dB", "20db"),
         stereoCorrelationLevel("-1", "0", "+1"),
+        stereoBalance("L", "", "R"),
         bassSpaceLabel("", "Bass Space: soon!"),
         freq1BassSpaceLevel("","",""),
         freq2BassSpaceLevel("","",""),
@@ -118,7 +119,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addAndMakeVisible(hyperLink);
     
     leftLevel.barCount = 20;
-    leftLevel.barWidth = 16;
+    leftLevel.barLength = 16;
     leftLevel.minValue = 0;
     leftLevel.maxValue = 1;
     leftLevel.overBar = 11;
@@ -130,7 +131,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addChildComponent(leftLevel);
     
     rightLevel.barCount = 20;
-    rightLevel.barWidth = 16;
+    rightLevel.barLength = 16;
     rightLevel.minValue = 0;
     rightLevel.maxValue = 1;
     rightLevel.overBar = 11;
@@ -143,7 +144,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     
     dynamicRangeLeftLevel.barCount = 20;
-    dynamicRangeLeftLevel.barWidth = 16;
+    dynamicRangeLeftLevel.barLength = 16;
     dynamicRangeLeftLevel.minValue = 0;
     dynamicRangeLeftLevel.maxValue = 1;
     dynamicRangeLeftLevel.overBar = 12;
@@ -155,7 +156,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addChildComponent(dynamicRangeLeftLevel);
     
     dynamicRangeRightLevel.barCount = 20;
-    dynamicRangeRightLevel.barWidth = 16;
+    dynamicRangeRightLevel.barLength = 16;
     dynamicRangeRightLevel.minValue = 0;
     dynamicRangeRightLevel.maxValue = 1;
     dynamicRangeRightLevel.overBar = 12;
@@ -168,7 +169,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     
     
     stereoCorrelationLevel.barCount = 20;
-    stereoCorrelationLevel.barWidth = 16;
+    stereoCorrelationLevel.barLength = 16;
     stereoCorrelationLevel.minValue = 0;
     stereoCorrelationLevel.maxValue = 2;
     stereoCorrelationLevel.overBar = 10;
@@ -178,6 +179,18 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     stereoCorrelationLevel.barColour = Colours::black;
     stereoCorrelationLevel.meterType = MeterType::CORRRELATION;
     addChildComponent(stereoCorrelationLevel);
+    
+    stereoBalance.barCount = 20;
+    stereoBalance.barLength = 16;
+    stereoBalance.minValue = 0;
+    stereoBalance.maxValue = 2;
+    stereoBalance.step = 2;
+    stereoBalance.underColour = Colours::green;
+    stereoBalance.barColour = Colours::black;
+    stereoBalance.meterType = MeterType::STEREOBALANCE;
+    stereoBalance.meterOrientation = MeterOrientation::HORIZONTAL;
+    addChildComponent(stereoBalance);
+    
     
     freq1Label.setJustificationType(juce::Justification::left);
     freq1Label.setFont(Font(10.0f));
@@ -196,7 +209,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addChildComponent(freq4Label);
     
     freq1BassSpaceLevel.barCount = 20;
-    freq1BassSpaceLevel.barWidth = 16;
+    freq1BassSpaceLevel.barLength = 16;
     freq1BassSpaceLevel.minValue = 0;
     freq1BassSpaceLevel.maxValue = 2;
     freq1BassSpaceLevel.overBar = 7;
@@ -208,7 +221,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addChildComponent(freq1BassSpaceLevel);
     
     freq2BassSpaceLevel.barCount = 20;
-    freq2BassSpaceLevel.barWidth = 16;
+    freq2BassSpaceLevel.barLength = 16;
     freq2BassSpaceLevel.minValue = 0;
     freq2BassSpaceLevel.maxValue = 2;
     freq2BassSpaceLevel.overBar = 7;
@@ -220,7 +233,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addChildComponent(freq2BassSpaceLevel);
     
     freq3BassSpaceLevel.barCount = 20;
-    freq3BassSpaceLevel.barWidth = 16;
+    freq3BassSpaceLevel.barLength = 16;
     freq3BassSpaceLevel.minValue = 0;
     freq3BassSpaceLevel.maxValue = 2;
     freq3BassSpaceLevel.overBar = 7;
@@ -232,7 +245,7 @@ TestPluginAudioProcessorEditor::TestPluginAudioProcessorEditor (TestPluginAudioP
     addChildComponent(freq3BassSpaceLevel);
     
     freq4BassSpaceLevel.barCount = 20;
-    freq4BassSpaceLevel.barWidth = 16;
+    freq4BassSpaceLevel.barLength = 16;
     freq4BassSpaceLevel.minValue = 0;
     freq4BassSpaceLevel.maxValue = 2;
     freq4BassSpaceLevel.overBar = 7;
@@ -310,6 +323,8 @@ void TestPluginAudioProcessorEditor::resized()
 
     stereoCorrelationLabel.setBounds(405, 350, 200, 40);
     stereoCorrelationLevel.setBounds(405, 250, 50, 100);
+    stereoBalance.setBounds(405, 350, 100, 50);
+    
     monoButton.setBounds(120, 440, 50, 20);
     leftButton.setBounds(180, 440, 50, 20);
     rightButton.setBounds(240, 440, 50, 20);
@@ -404,6 +419,7 @@ void TestPluginAudioProcessorEditor::buttonClicked(juce::Button * button)
         bassSoloButton.setVisible(true);
         
         stereoCorrelationLevel.setVisible(true);
+        stereoBalance.setVisible(true);
         vectorScope.setVisible(true);
         
         mode = UIConstants::Mode::STEREO;
@@ -513,6 +529,9 @@ void TestPluginAudioProcessorEditor::timerCallback()
             stereoCorrelationLevel.levelData = processor.stereoCorrelation + 1;
             stereoCorrelationLevel.repaint();
             stereoCorrelationLabel.setText("Stereo Correlation: " + String(processor.stereoCorrelation, 2), dontSendNotification);
+            
+            stereoBalance.levelData = processor.stereoBalance;
+            stereoBalance.repaint();
             
             vectorScope.setCurrentPointArray(processor.scopePoints);
             vectorScope.repaint();

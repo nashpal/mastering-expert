@@ -85,6 +85,7 @@ private:
     LevelMeter dynamicRangeRightLevel;
     
     LevelMeter stereoCorrelationLevel;
+    LevelMeter stereoBalance;
     
     Label freq1Label;
     Label freq2Label;

@@ -123,6 +123,9 @@ public:
     // LUFS value of 3 seconds
     int lufsShortTermLoudnessSampleCount;
     
+    // Range between [0,2] for l - r.
+    float stereoBalance = 0;
+    
     UIConstants::Mode mode = UIConstants::Mode::DYNAMIC_RANGE;
     
 private:

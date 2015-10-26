@@ -467,6 +467,7 @@ void TestPluginAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuff
                 
                 Rxy0 += leftChannelData[i] * rightChannelData[i];
                 
+                stereoBalance = -std::abs(leftChannelData[i]) + std::abs(rightChannelData[i]) + 1;
             }
             
             if (mode == UIConstants::Mode::DYNAMIC_RANGE || mode == UIConstants::Mode::STEREO)

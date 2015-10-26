@@ -16,7 +16,14 @@ enum class MeterType
 {
     NORMAL,
     DYNAMICRANGE,
-    CORRRELATION
+    CORRRELATION,
+    STEREOBALANCE
+};
+
+enum class MeterOrientation
+{
+    VERTICAL,
+    HORIZONTAL
 };
 
 class LevelMeter  : public Component
@@ -46,13 +53,14 @@ public:
     float maxValue;
     float minValue;
     
-    float barWidth;
+    float barLength;
     
     MeterType meterType;
+    MeterOrientation meterOrientation = MeterOrientation::VERTICAL;
 
-    Label bottomLabel;
+    Label minLabel;
     Label midLabel;
-    Label topLabel;
+    Label maxLabel;
     
 private:
     
